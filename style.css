@@ -86,30 +86,24 @@ header {
 }
 
 .event-card {
-  background: white;
-  border-radius: 8px;
-  padding: 0.8rem;
-  margin: 0.5rem 0;
-  font-size: 1rem;
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
-  font-weight: normal;
-  white-space: pre-wrap;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 16px;
+  font-size: 16px;
+  border-bottom: 1px solid #ccc;
+  line-height: 1.4;
+  word-break: break-word;
   cursor: pointer;
 }
+
+.red { background-color: #fff0f0; }
+.blue { background-color: #f0f6ff; }
+
 
 .hidden {
   display: none;
 }
 
-.red {
-  color: red;
-  font-weight: bold;
-}
-
-.blue {
-  color: blue;
-  font-weight: bold;
-}
 
 /* モーダル */
 .modal-backdrop {
