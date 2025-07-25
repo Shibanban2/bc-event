@@ -21,7 +21,9 @@ function renderContent(id, showPast) {
   const container = document.getElementById(id);
   container.innerHTML = '';
   const sections = id === 'all' ? Object.keys(data).filter(k => k !== 'gatya5') : [id];
-
+const sortedEvents = sortEvents(data[key]);
+for (let i = 0; i < sortedEvents.length; i++) {
+  const text = sortedEvents[i];
   for (const key of sections) {
     const title = document.createElement('div');
     title.className = 'section-title';
@@ -40,9 +42,9 @@ function renderContent(id, showPast) {
       const div = document.createElement('div');
       div.className = 'event-card';
  if (!/ミッション/.test(text)) {
-              if (/祭|確定|レジェンドクエスト|風雲にゃんこ塔|異界にゃんこ塔|グランドアビス|闇目|ねこの目洞窟|ガチャ半額リセット|確率2倍|にゃんこスロット|必要/.test(text)) {
+              if (/確定|レジェンドクエスト|風雲にゃんこ塔|異界にゃんこ塔|グランドアビス|闇目|ねこの目洞窟|ガチャ半額リセット|確率2倍|にゃんこスロット|必要/.test(text)) {
                 div.classList.add('red');
-              } else if (/おまけアップ|異次元コロシアム|強襲|ランキングの間|ネコ基地トーク/.test(text)) {
+              } else if (/step|異次元コロシアム|ランキングの間|ネコ基地トーク/.test(text)) {
                 div.classList.add('blue');
               }
             }
@@ -67,6 +69,19 @@ function renderContent(id, showPast) {
       container.appendChild(none);
     }
   }
+}
+function sortEvents(keyArray) {
+  return keyArray
+    .map(text => {
+      const match = text.match(/^(\d{2})\/(\d{2})/);
+      if (!match) return { text, date: new Date(2100, 0, 1) }; // ソート対象外扱い
+      const year = now.getFullYear();
+      const month = parseInt(match[1]) - 1;
+      const day = parseInt(match[2]);
+      return { text, date: new Date(year, month, day) };
+    })
+    .sort((a, b) => a.date - b.date)
+    .map(obj => obj.text);
 }
 
 function showTab(id) {
