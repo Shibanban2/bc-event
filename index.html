@@ -47,7 +47,7 @@
       let data = {};
       const now = new Date();
 
-      fetch('https://your-username.github.io/your-repo/data.json')
+      fetch('https://Shibanban2.github.io/nyanko-schedule-site/data.json')
         .then(res => res.json())
         .then(json => {
           data = json;
@@ -64,6 +64,18 @@
       }
 
       function renderContent(id, showPast) {
+                  // item3 から「ガチャ半額リセット（1回/11連）」を gatya4 へ移動
+  if (data.item3) {
+    const moved = data.item3.filter(text =>
+      /ガチャ半額リセット（1回）/.test(text) || /ガチャ半額リセット（11連）/.test(text)
+    );
+    if (moved.length > 0) {
+      data.item3 = data.item3.filter(text =>
+        !(/ガチャ半額リセット（1回）/.test(text) || /ガチャ半額リセット（11連）/.test(text))
+      );
+      data.gatya4 = [...(data.gatya4 || []), ...moved];
+    }
+  }
         const container = document.getElementById(id);
         container.innerHTML = '';
         const sections = id === 'all' ? Object.keys(data).filter(k => k !== 'gatya5') : [id];
