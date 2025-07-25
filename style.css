@@ -1,148 +1,171 @@
+/* ベース設定 */
 body {
-        font-family: sans-serif;
-        margin: 0;
-        background: #ffffff;
-      }
+  font-family: "Noto Sans JP", sans-serif;
+  margin: 0;
+  background: #ffffff;
+  line-height: 1.6;
+}
 
-      header {
-        background-color: #222;
-        color: white;
-        padding: 1rem;
-        text-align: center;
-        font-size: 1.8rem;
-        font-weight: bold;
-        position: relative;
-      }
+/* ヘッダー */
+header {
+  background-color: #222;
+  color: white;
+  padding: 1rem;
+  text-align: center;
+  font-size: 1.8rem;
+  font-weight: bold;
+  position: relative;
+}
 
-      .tsv-link, #save-btn {
-        position: absolute;
-        top: 1rem;
-        font-size: 0.9rem;
-        background-color: #444;
-        color: white;
-        padding: 6px 12px;
-        border-radius: 6px;
-        text-decoration: none;
-        font-weight: bold;
-      }
+/* TSVリンク・保存ボタン */
+.tsv-link, #save-btn {
+  position: absolute;
+  top: 1rem;
+  font-size: 0.9rem;
+  background-color: #444;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: bold;
+}
 
-      .tsv-link {
-        right: 1rem;
-      }
+.tsv-link {
+  right: 1rem;
+}
 
-      #save-btn {
-        left: 1rem;
-        cursor: pointer;
-        border: none;
-      }
+#save-btn {
+  left: 1rem;
+  cursor: pointer;
+  border: none;
+}
 
-      .tabs {
-        display: flex;
-        background: #ddd;
-        flex-wrap: wrap;
-      }
+/* タブ */
+.tabs {
+  display: flex;
+  background: #ddd;
+  flex-wrap: wrap;
+}
 
-      .tab {
-        flex: 1 1 auto;
-        text-align: center;
-        padding: 1rem;
-        cursor: pointer;
-        font-size: 1.1rem;
-        border-bottom: 3px solid transparent;
-      }
+.tab {
+  flex: 1 1 auto;
+  text-align: center;
+  padding: 1rem;
+  cursor: pointer;
+  font-size: 1.1rem;
+  border-bottom: 3px solid transparent;
+}
 
-      .tab.active {
-        background: white;
-        border-bottom: 3px solid #000;
-        font-weight: bold;
-      }
+.tab.active {
+  background: white;
+  border-bottom: 3px solid #000;
+  font-weight: bold;
+}
 
-      .checkbox-container {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 10px;
-        background: #f0f0f0;
-      }
+/* チェックボックス */
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  background: #f0f0f0;
+}
 
-      .checkbox-container input {
-        transform: scale(1.5);
-        margin-right: 10px;
-      }
+.checkbox-container input {
+  transform: scale(1.5);
+  margin-right: 10px;
+}
 
-      .checkbox-container label {
-        font-size: 1.2rem;
-      }
+.checkbox-container label {
+  font-size: 1.2rem;
+}
 
-      .content {
-        padding: 1rem;
-      }
+/* コンテンツ領域 */
+.content {
+  padding: 1rem;
+}
 
-      .section-title {
-        font-size: 1.2rem;
-        font-weight: bold;
-        margin: 1.5rem 0 0.5rem;
-        border-bottom: 2px solid #aaa;
-      }
+/* セクションタイトル */
+.section-title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin: 1.5rem 0 0.5rem;
+  border-bottom: 2px solid #aaa;
+}
 
-      .event-card {
-        background: white;
-        border-radius: 8px;
-        padding: 0.8rem;
-        margin: 0.5rem 0;
-        font-size: 1rem;
-        box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
-        font-weight: normal;
-        white-space: pre-wrap;
-        cursor: pointer;
-      }
+/* イベントカード */
+.event-card {
+  padding: 10px 14px;
+  font-size: 15px;
+  line-height: 1.5;
+  border-bottom: 1px solid #ccc;
+  cursor: pointer;
+  word-break: break-word;
+}
 
-      .hidden {
-        display: none;
-      }
+.red {
+  background-color: #fff0f0;
+}
 
-      .red {
-        color: red;
-        font-weight: bold;
-      }
+.blue {
+  background-color: #f0f6ff;
+}
 
-      .blue {
-        color: blue;
-        font-weight: bold;
-      }
+/* スマホ向け調整 */
+@media (max-width: 480px) {
+  .event-card {
+    font-size: 14px;
+    padding: 8px 12px;
+  }
 
-      /* モーダル */
-      .modal-backdrop {
-        display: none; /* 初期状態で非表示 */
-        position: fixed;
-        top: 0; left: 0;
-        width: 100%; height: 100%;
-        background: rgba(0,0,0,0.5);
-        justify-content: center;
-        align-items: center;
-        z-index: 1000;
-      }
+  .section-title,
+  header,
+  .tab,
+  .checkbox-container label {
+    font-size: 14px;
+  }
 
-      .modal-backdrop.show {
-        display: flex;
-      }
+  #modal-close {
+    font-size: 2.5rem;
+  }
+}
 
-      .modal-content {
-        background: white;
-        padding: 20px;
-        border-radius: 10px;
-        max-width: 90%;
-        max-height: 80%;
-        overflow-y: auto;
-        box-shadow: 0 0 10px rgba(0,0,0,0.3);
-        position: relative;
-      }
+/* 表示制御 */
+.hidden {
+  display: none;
+}
 
-      .modal-content #modal-close {
-        position: absolute;
-        top: 10px;
-        right: 15px;
-        font-size: 3.0rem;
-        cursor: pointer;
-      }
-    </style>
+/* モーダル */
+.modal-backdrop {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.5);
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-backdrop.show {
+  display: flex;
+}
+
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  max-width: 90%;
+  max-height: 80%;
+  overflow-y: auto;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  position: relative;
+}
+
+#modal-close {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 3.0rem;
+  cursor: pointer;
+}
