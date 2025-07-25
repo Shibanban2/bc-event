@@ -1,9 +1,12 @@
+/* ベース設定 */
 body {
-  font-family: sans-serif;
+  font-family: "Noto Sans JP", sans-serif;
   margin: 0;
   background: #ffffff;
+  line-height: 1.6;
 }
 
+/* ヘッダー */
 header {
   background-color: #222;
   color: white;
@@ -14,6 +17,7 @@ header {
   position: relative;
 }
 
+/* TSVリンク・保存ボタン */
 .tsv-link, #save-btn {
   position: absolute;
   top: 1rem;
@@ -36,6 +40,7 @@ header {
   border: none;
 }
 
+/* タブ */
 .tabs {
   display: flex;
   background: #ddd;
@@ -57,6 +62,7 @@ header {
   font-weight: bold;
 }
 
+/* チェックボックス */
 .checkbox-container {
   display: flex;
   align-items: center;
@@ -74,10 +80,12 @@ header {
   font-size: 1.2rem;
 }
 
+/* コンテンツ領域 */
 .content {
   padding: 1rem;
 }
 
+/* セクションタイトル */
 .section-title {
   font-size: 1.2rem;
   font-weight: bold;
@@ -85,25 +93,47 @@ header {
   border-bottom: 2px solid #aaa;
 }
 
+/* イベントカード */
 .event-card {
-  display: flex;
-  flex-direction: column;
-  padding: 12px 16px;
-  font-size: 16px;
+  padding: 10px 14px;
+  font-size: 15px;
+  line-height: 1.5;
   border-bottom: 1px solid #ccc;
-  line-height: 1.4;
-  word-break: break-word;
   cursor: pointer;
+  word-break: break-word;
 }
 
-.red { background-color: #fff0f0; }
-.blue { background-color: #f0f6ff; }
+.red {
+  background-color: #fff0f0;
+}
 
+.blue {
+  background-color: #f0f6ff;
+}
 
+/* スマホ向け調整 */
+@media (max-width: 480px) {
+  .event-card {
+    font-size: 14px;
+    padding: 8px 12px;
+  }
+
+  .section-title,
+  header,
+  .tab,
+  .checkbox-container label {
+    font-size: 14px;
+  }
+
+  #modal-close {
+    font-size: 2.5rem;
+  }
+}
+
+/* 表示制御 */
 .hidden {
   display: none;
 }
-
 
 /* モーダル */
 .modal-backdrop {
