@@ -1,12 +1,12 @@
 let data = {};
 const now = new Date();
 
-// データ取得
+// JSONを取得
 fetch('https://Shibanban2.github.io/bc-event/data.json')
   .then(res => res.json())
   .then(json => {
     data = json;
-    renderContent('gatya', false);
+    renderContent('gatya', false); // 初期表示
   });
 
 function parseStartDate(text) {
@@ -47,6 +47,7 @@ function renderContent(id, showPast) {
       const div = document.createElement('div');
       div.className = 'event-card';
 
+      // 色分け
       if (!/ミッション/.test(text)) {
         if (/祭|確定|レジェンドクエスト|風雲にゃんこ塔|異界にゃんこ塔|グランドアビス|闇目|ねこの目洞窟|ガチャ半額リセット|確率2倍|にゃんこスロット|必要/.test(text)) {
           div.classList.add('red');
@@ -57,6 +58,7 @@ function renderContent(id, showPast) {
 
       div.innerHTML = text;
 
+      // モーダル
       if (detail) {
         div.addEventListener('click', () => openModal(detail));
       }
@@ -101,4 +103,23 @@ function closeModal() {
 document.getElementById('modal-close').addEventListener('click', closeModal);
 document.getElementById('detail-modal').addEventListener('click', e => {
   if (e.target.id === 'detail-modal') closeModal();
+});
+
+// 画像保存
+document.getElementById('save-btn').addEventListener('click', () => {
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  const fileName = `nyanko_schedule_${yyyy}-${mm}-${dd}.png`;
+
+  html2canvas(document.body, {
+    backgroundColor: '#ffffff',
+    useCORS: true
+  }).then(canvas => {
+    const link = document.createElement('a');
+    link.download = fileName;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  });
 });
