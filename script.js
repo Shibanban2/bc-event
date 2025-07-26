@@ -88,7 +88,7 @@ function showTab(id) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.content').forEach(c => c.classList.add('hidden'));
 
-  document.querySelector(.tab[onclick="showTab('${id}')"]).classList.add('active');
+  document.querySelector(`.tab[onclick="showTab('${id}')"]`).classList.add('active');
   document.getElementById(id).classList.remove('hidden');
 
   renderContent(id, document.getElementById('showAll').checked);
