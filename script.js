@@ -1,7 +1,6 @@
 let data = {};
 const now = new Date();
 
-// JSONデータ取得
 fetch('https://Shibanban2.github.io/bc-event/data.json')
   .then(res => res.json())
   .then(json => {
@@ -9,7 +8,6 @@ fetch('https://Shibanban2.github.io/bc-event/data.json')
     renderContent('gatya4', false);
   });
 
-// 日付抽出してDate型に変換
 function parseStartDate(text) {
   const match = text.match(/^(\d{2})\/(\d{2})/);
   if (!match) return null;
@@ -19,26 +17,19 @@ function parseStartDate(text) {
   return new Date(year, month, day);
 }
 
-// イベントを日付順ソート（item4対応）
-function sortEvents(eventArray, isObjectArray = false) {
-  return eventArray
-    .map(item => {
-      const text = isObjectArray ? item.title : item;
-      const match = text.match(/^(\d{2})\/(\d{2})/);
-      const date = match
-        ? new Date(now.getFullYear(), parseInt(match[1]) - 1, parseInt(match[2]))
-        : new Date(2100, 0, 1); // 日付なしは最後
-      return isObjectArray ? { ...item, date } : { text, date };
-    })
-    .sort((a, b) => a.date - b.date);
-}
-
-// コンテンツ描画
+// イベント表示処理
 function renderContent(id, showPast) {
   const container = document.getElementById(id);
   container.innerHTML = '';
 
-  const sections = id === 'all' ? Object.keys(data).filter(k => k !== 'gatya5') : [id];
+  // item4 の A列（イベント名）と D列（詳細）を分けて処理するための準備
+  const isItem4 = id === 'item4';
+  const item4Names = isItem4 ? (data.item4?.names || []) : [];
+  const item4Details = isItem4 ? (data.item4?.details || []) : [];
+
+  const sections = id === 'all'
+    ? Object.keys(data).filter(k => k !== 'gatya5')  // gatya5 は詳細用なので表示しない
+    : [id];
 
   for (const key of sections) {
     const title = document.createElement('div');
@@ -46,27 +37,15 @@ function renderContent(id, showPast) {
     title.textContent = key;
     container.appendChild(title);
 
-    if (!data[key] || data[key].length === 0) {
-      const none = document.createElement('div');
-      none.textContent = '表示できるイベントはありません';
-      container.appendChild(none);
-      continue;
-    }
-
-    // item4 はオブジェクト配列としてソート、それ以外は通常配列
-    const isItem4 = key === 'item4';
-    const sortedEvents = sortEvents(data[key], isItem4);
     let count = 0;
+    const events = sortEvents(data[key] || []);
 
-    for (let i = 0; i < sortedEvents.length; i++) {
-      const event = sortedEvents[i];
-      const text = isItem4 ? event.title : event.text || event;
-
-      // gatya4: プラチナガチャ/レジェンドガチャを非表示
+    for (let i = 0; i < events.length; i++) {
+      const text = events[i];
       if (key === 'gatya4' && (/プラチナガチャ|レジェンドガチャ/.test(text))) continue;
 
-      // item3: 道場報酬 / 報酬設定（地底迷宮）を非表示
-      if (key === 'item3' && (/道場報酬|報酬設定（地底迷宮）/.test(text))) continue;
+      // item4: 道場報酬 / 報酬設定（地底迷宮） を非表示
+      if (key === 'item4' && (/道場報酬|報酬設定（地底迷宮）/.test(text))) continue;
 
       const startDate = parseStartDate(text);
       if (!showPast && startDate && startDate < now) continue;
@@ -75,27 +54,26 @@ function renderContent(id, showPast) {
       const div = document.createElement('div');
       div.className = 'event-card';
 
-      // 色付けルール
       if (!/ミッション/.test(text)) {
-        if (/確定|レジェンドクエスト|風雲にゃんこ塔|異界にゃんこ塔|グランドアビス|闇目|ねこの目洞窟|ガチャ半額リセット|確率2倍|にゃんこスロット|必要/.test(text)) {
+        if (/祭|確定|レジェンドクエスト|風雲にゃんこ塔|異界にゃんこ塔|グランドアビス|闇目|ねこの目洞窟|ガチャ半額リセット|確率2倍|にゃんこスロット|必要/.test(text)) {
           div.classList.add('red');
-        } else if (/step|異次元コロシアム|ランキングの間|ネコ基地トーク/.test(text)) {
+        } else if (/おまけアップ|異次元コロシアム|強襲|ランキングの間|ネコ基地トーク/.test(text)) {
           div.classList.add('blue');
         }
       }
 
       div.innerHTML = text;
 
-      // モーダル対応
+      // gatya4 と item4 でモーダルの内容を取得
       if (key === 'gatya4') {
         div.addEventListener('click', () => {
-          const detail = data.gatya5 && data.gatya5[i] ? data.gatya5[i] : '詳細情報がありません';
+          const detail = data.gatya5[i] || '詳細情報がありません';
           openModal(detail);
         });
       }
       if (key === 'item4') {
         div.addEventListener('click', () => {
-          const detail = event.detail || '詳細情報がありません';
+          const detail = item4Details[i] || '詳細情報がありません';
           openModal(detail);
         });
       }
@@ -112,7 +90,21 @@ function renderContent(id, showPast) {
   }
 }
 
-// タブ切替
+// 日付順にソート
+function sortEvents(keyArray) {
+  return keyArray
+    .map(text => {
+      const match = text.match(/^(\d{2})\/(\d{2})/);
+      if (!match) return { text, date: new Date(2100, 0, 1) }; // 日付なしは最後へ
+      const year = now.getFullYear();
+      const month = parseInt(match[1]) - 1;
+      const day = parseInt(match[2]);
+      return { text, date: new Date(year, month, day) };
+    })
+    .sort((a, b) => a.date - b.date)
+    .map(obj => obj.text);
+}
+
 function showTab(id) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.content').forEach(c => c.classList.add('hidden'));
@@ -123,14 +115,12 @@ function showTab(id) {
   renderContent(id, document.getElementById('showAll').checked);
 }
 
-// チェックボックスで過去イベント表示切替
 document.getElementById('showAll').addEventListener('change', () => {
   const activeTab = document.querySelector('.tab.active').textContent.trim();
   const id = activeTab === 'すべての予定' ? 'all' : activeTab;
   renderContent(id, document.getElementById('showAll').checked);
 });
 
-// モーダル関連
 function openModal(content) {
   document.getElementById('modal-body').innerHTML = content;
   document.getElementById('detail-modal').classList.add('show');
@@ -145,7 +135,6 @@ document.getElementById('detail-modal').addEventListener('click', e => {
   if (e.target.id === 'detail-modal') closeModal();
 });
 
-// スクショ保存
 document.getElementById('save-btn').addEventListener('click', () => {
   const today = new Date();
   const yyyy = today.getFullYear();
