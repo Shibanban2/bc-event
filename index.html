@@ -17,7 +17,7 @@
     <div class="tabs">
       <div class="tab active" onclick="showTab('gatya4')">gatya</div>
       <div class="tab" onclick="showTab('sale4')">sale</div>
-      <div class="tab" onclick="showTab('item3')">item</div>
+      <div class="tab" onclick="showTab('item4')">item</div>
       <div class="tab" onclick="showTab('mission')">mission</div>
       <div class="tab" onclick="showTab('all')">すべての予定</div>
     </div>
@@ -65,12 +65,12 @@
 
       function renderContent(id, showPast) {
                   // item3 から「ガチャ半額リセット（1回/11連）」を gatya4 へ移動
-  if (data.item3) {
-    const moved = data.item3.filter(text =>
+  if (data.item4) {
+    const moved = data.item4.filter(text =>
       /ガチャ半額リセット（1回）/.test(text) || /ガチャ半額リセット（11連）/.test(text)
     );
     if (moved.length > 0) {
-      data.item3 = data.item3.filter(text =>
+      data.item3 = data.item4.filter(text =>
         !(/ガチャ半額リセット（1回）/.test(text) || /ガチャ半額リセット（11連）/.test(text))
       );
       data.gatya4 = [...(data.gatya4 || []), ...moved];
