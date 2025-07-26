@@ -46,10 +46,8 @@
     <!-- 外部スクリプトを最後に読み込む -->
     <script src="script.js"></script>
   </body>
-</html>
 
-
-      function parseStartDate(text) {
+     function parseStartDate(text) {
         const match = text.match(/^(\d{2})\/(\d{2})/);
         if (!match) return null;
         const year = new Date().getFullYear();
