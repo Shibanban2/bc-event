@@ -110,14 +110,17 @@ header {
 
 .modal-content {
   background: white;
-  padding: 14px;
+  padding: 12px;
   border-radius: 6px;
-  max-width: 90%;
-  max-height: 80%;
+  max-width: 80%;     /* 横幅を少し狭める */
+  max-height: 70%;    /* 高さも少し小さく */
   overflow-y: auto;
   box-shadow: 0 0 6px rgba(0,0,0,0.3);
   position: relative;
+  font-size: 0.8rem;  /* ←ここで文字サイズを調整（小さめ） */
+  line-height: 1.4;   /* 読みやすさのため行間調整 */
 }
+
 
 .modal-content #modal-close {
   position: absolute;
