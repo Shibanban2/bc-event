@@ -58,7 +58,13 @@ for (let i = 0; i < sortedEvents.length; i++) {
           openModal(detail);
         });
       }
-
+// item4 の場合もモーダルを表示
+if (key === 'item4') {
+  div.addEventListener('click', () => {
+    const detail = data.item5 && data.item5[i] ? data.item5[i] : '詳細情報がありません';
+    openModal(detail);
+  });
+}
       container.appendChild(div);
       count++;
     }
