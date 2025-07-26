@@ -90,6 +90,8 @@
           for (let i = 0; i < data[key].length; i++) {
             const text = data[key][i];
             if (key === 'gatya4' && (/プラチナガチャ|レジェンドガチャ/.test(text))) continue;
+              // item3: 道場報酬 / 報酬設定（地底迷宮） を非表示
+  if (key === 'item3' && (/道場報酬|報酬設定（地底迷宮）/.test(text))) continue;
 
             const startDate = parseStartDate(text);
             if (!showPast && startDate && startDate < now) continue;
