@@ -129,22 +129,6 @@ document.getElementById('save-btn').addEventListener('click', () => {
   const mm = String(today.getMonth() + 1).padStart(2, '0');
   const dd = String(today.getDate()).padStart(2, '0');
   const fileName = `nyanko_schedule_${yyyy}-${mm}-${dd}.png`;
-// Contactモーダルの開閉
-const contactBtn = document.getElementById('contact-btn');
-const contactModal = document.getElementById('contact-modal');
-const contactClose = document.getElementById('contact-close');
-
-contactBtn.addEventListener('click', () => {
-  contactModal.classList.add('show');
-});
-
-contactClose.addEventListener('click', () => {
-  contactModal.classList.remove('show');
-});
-
-contactModal.addEventListener('click', e => {
-  if (e.target.id === 'contact-modal') contactModal.classList.remove('show');
-});
 
   html2canvas(document.body, {
     backgroundColor: '#ffffff',
