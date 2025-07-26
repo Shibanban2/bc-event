@@ -30,7 +30,7 @@
     <main id="main-container">
       <div id="gatya4" class="content"></div>
       <div id="sale4" class="content hidden"></div>
-      <div id="item3" class="content hidden"></div>
+      <div id="item4" class="content hidden"></div>
       <div id="mission" class="content hidden"></div>
       <div id="all" class="content hidden"></div>
     </main>
@@ -43,16 +43,11 @@
       </div>
     </div>
 
-    <script>
-      let data = {};
-      const now = new Date();
+    <!-- 外部スクリプトを最後に読み込む -->
+    <script src="script.js"></script>
+  </body>
+</html>
 
-      fetch('https://Shibanban2.github.io/bc-event/data.json')
-        .then(res => res.json())
-        .then(json => {
-          data = json;
-          renderContent('gatya4', false);
-        });
 
       function parseStartDate(text) {
         const match = text.match(/^(\d{2})\/(\d{2})/);
@@ -70,7 +65,7 @@
       /ガチャ半額リセット（1回）/.test(text) || /ガチャ半額リセット（11連）/.test(text)
     );
     if (moved.length > 0) {
-      data.item3 = data.item4.filter(text =>
+      data.item4 = data.item4.filter(text =>
         !(/ガチャ半額リセット（1回）/.test(text) || /ガチャ半額リセット（11連）/.test(text))
       );
       data.gatya4 = [...(data.gatya4 || []), ...moved];
@@ -90,8 +85,8 @@
           for (let i = 0; i < data[key].length; i++) {
             const text = data[key][i];
             if (key === 'gatya4' && (/プラチナガチャ|レジェンドガチャ/.test(text))) continue;
-              // item3: 道場報酬 / 報酬設定（地底迷宮） を非表示
-  if (key === 'item3' && (/道場報酬|報酬設定（地底迷宮）/.test(text))) continue;
+              // item4: 道場報酬 / 報酬設定（地底迷宮） を非表示
+  if (key === 'item4' && (/道場報酬|報酬設定（地底迷宮）/.test(text))) continue;
 
             const startDate = parseStartDate(text);
             if (!showPast && startDate && startDate < now) continue;
