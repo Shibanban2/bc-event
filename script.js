@@ -1,11 +1,12 @@
 let data = {};
 const now = new Date();
 
+// データ取得
 fetch('https://Shibanban2.github.io/bc-event/data.json')
   .then(res => res.json())
   .then(json => {
     data = json;
-    renderContent('gatya4', false);
+    renderContent('gatya', false);
   });
 
 function parseStartDate(text) {
@@ -20,20 +21,24 @@ function parseStartDate(text) {
 function renderContent(id, showPast) {
   const container = document.getElementById(id);
   container.innerHTML = '';
-  const sections = id === 'all' ? Object.keys(data).filter(k => k !== 'gatya5') : [id];
-const sortedEvents = sortEvents(data[key]);
-for (let i = 0; i < sortedEvents.length; i++) {
-  const text = sortedEvents[i];
+
+  const sections = id === 'all'
+    ? Object.keys(data)
+    : [id];
+
   for (const key of sections) {
     const title = document.createElement('div');
     title.className = 'section-title';
     title.textContent = key;
     container.appendChild(title);
 
+    const entries = data[key] || [];
     let count = 0;
-    for (let i = 0; i < data[key].length; i++) {
-      const text = data[key][i];
-      if (key === 'gatya4' && (/プラチナガチャ|レジェンドガチャ/.test(text))) continue;
+
+    for (let i = 0; i < entries.length; i++) {
+      const entry = entries[i];
+      const text = typeof entry === 'string' ? entry : entry.title;
+      const detail = typeof entry === 'string' ? '' : entry.detail;
 
       const startDate = parseStartDate(text);
       if (!showPast && startDate && startDate < now) continue;
@@ -41,22 +46,19 @@ for (let i = 0; i < sortedEvents.length; i++) {
 
       const div = document.createElement('div');
       div.className = 'event-card';
- if (!/ミッション/.test(text)) {
-              if (/確定|レジェンドクエスト|風雲にゃんこ塔|異界にゃんこ塔|グランドアビス|闇目|ねこの目洞窟|ガチャ半額リセット|確率2倍|にゃんこスロット|必要/.test(text)) {
-                div.classList.add('red');
-              } else if (/step|異次元コロシアム|ランキングの間|ネコ基地トーク/.test(text)) {
-                div.classList.add('blue');
-              }
-            }
-    
+
+      if (!/ミッション/.test(text)) {
+        if (/祭|確定|レジェンドクエスト|風雲にゃんこ塔|異界にゃんこ塔|グランドアビス|闇目|ねこの目洞窟|ガチャ半額リセット|確率2倍|にゃんこスロット|必要/.test(text)) {
+          div.classList.add('red');
+        } else if (/おまけアップ|異次元コロシアム|強襲|ランキングの間|ネコ基地トーク/.test(text)) {
+          div.classList.add('blue');
+        }
+      }
 
       div.innerHTML = text;
 
-      if (key === 'gatya4') {
-        div.addEventListener('click', () => {
-          const detail = data.gatya5[i] || '詳細情報がありません';
-          openModal(detail);
-        });
+      if (detail) {
+        div.addEventListener('click', () => openModal(detail));
       }
 
       container.appendChild(div);
@@ -69,19 +71,6 @@ for (let i = 0; i < sortedEvents.length; i++) {
       container.appendChild(none);
     }
   }
-}
-function sortEvents(keyArray) {
-  return keyArray
-    .map(text => {
-      const match = text.match(/^(\d{2})\/(\d{2})/);
-      if (!match) return { text, date: new Date(2100, 0, 1) }; // ソート対象外扱い
-      const year = now.getFullYear();
-      const month = parseInt(match[1]) - 1;
-      const day = parseInt(match[2]);
-      return { text, date: new Date(year, month, day) };
-    })
-    .sort((a, b) => a.date - b.date)
-    .map(obj => obj.text);
 }
 
 function showTab(id) {
@@ -112,22 +101,4 @@ function closeModal() {
 document.getElementById('modal-close').addEventListener('click', closeModal);
 document.getElementById('detail-modal').addEventListener('click', e => {
   if (e.target.id === 'detail-modal') closeModal();
-});
-
-document.getElementById('save-btn').addEventListener('click', () => {
-  const today = new Date();
-  const yyyy = today.getFullYear();
-  const mm = String(today.getMonth() + 1).padStart(2, '0');
-  const dd = String(today.getDate()).padStart(2, '0');
-  const fileName = nyanko_schedule_${yyyy}-${mm}-${dd}.png;
-
-  html2canvas(document.body, {
-    backgroundColor: '#ffffff',
-    useCORS: true
-  }).then(canvas => {
-    const link = document.createElement('a');
-    link.download = fileName;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-  });
 });
