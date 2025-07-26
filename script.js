@@ -1,13 +1,26 @@
 let data = {};
 const now = new Date();
 
-// JSONを取得
 fetch('https://Shibanban2.github.io/bc-event/data.json')
   .then(res => res.json())
   .then(json => {
     data = json;
-    renderContent('gatya', false); // 初期表示
+    preprocessData(); // データ整理（ガチャ半額リセットの移動など）
+    renderContent('gatya', false);
   });
+
+function preprocessData() {
+  // item → gatya に「ガチャ半額リセット」を移動（先頭に）
+  if (data.item) {
+    const moved = data.item.filter(e =>
+      e.title && /ガチャ半額リセット/.test(e.title)
+    );
+    if (moved.length > 0) {
+      data.item = data.item.filter(e => !/ガチャ半額リセット/.test(e.title));
+      data.gatya = [...moved, ...(data.gatya || [])];
+    }
+  }
+}
 
 function parseStartDate(text) {
   const match = text.match(/^(\d{2})\/(\d{2})/);
@@ -22,8 +35,9 @@ function renderContent(id, showPast) {
   const container = document.getElementById(id);
   container.innerHTML = '';
 
+  const order = ['gatya', 'sale', 'item', 'mission'];
   const sections = id === 'all'
-    ? Object.keys(data)
+    ? order
     : [id];
 
   for (const key of sections) {
@@ -39,6 +53,10 @@ function renderContent(id, showPast) {
       const entry = entries[i];
       const text = typeof entry === 'string' ? entry : entry.title;
       const detail = typeof entry === 'string' ? '' : entry.detail;
+
+      // 除外条件
+      if (key === 'gatya' && (/プラチナガチャ|レジェンドガチャ/.test(text))) continue;
+      if (key === 'item' && (/道場報酬|報酬設定/.test(text))) continue;
 
       const startDate = parseStartDate(text);
       if (!showPast && startDate && startDate < now) continue;
@@ -58,7 +76,7 @@ function renderContent(id, showPast) {
 
       div.innerHTML = text;
 
-      // モーダル
+      // モーダル対応（gatya, item, saleのみ）
       if (detail) {
         div.addEventListener('click', () => openModal(detail));
       }
@@ -105,7 +123,6 @@ document.getElementById('detail-modal').addEventListener('click', e => {
   if (e.target.id === 'detail-modal') closeModal();
 });
 
-// 画像保存
 document.getElementById('save-btn').addEventListener('click', () => {
   const today = new Date();
   const yyyy = today.getFullYear();
