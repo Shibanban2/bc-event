@@ -1,59 +1,12 @@
 let data = {};
-// 追加: 日付を MMDD 形式へ変換
-const toMMDD = (date) => String(date.getMonth() + 1).padStart(2, '0') + String(date.getDate()).padStart(2, '0');
-
-// 日付範囲を MMDD で解析する（常設対応）
-function parseRange(text) {
-  const match = text.match(/(\d{2})\/(\d{2})〜(\d{2})\/(\d{2})/);
-  if (!match) return { start: null, end: null };
-
-  const year = new Date().getFullYear();
-  const startDate = new Date(year, Number(match[1]) - 1, Number(match[2]), 11, 0, 0);
-  const endDate = new Date(year, Number(match[3]) - 1, Number(match[4]), 11, 0, 0);
-
-  return {
-    start: toMMDD(startDate),
-    end: toMMDD(endDate),
-  };
-}
-
-// イベント状態チェック
-function isEventOngoing(start, end) {
-  const now = toMMDD(new Date());
-  if (!start || start > now) return false;
-  if (end === "常設" || end === "20300101") return false;
-  return end >= now;
-}
-
-function isEventUpcoming(start) {
-  const now = toMMDD(new Date());
-  return start > now;
-}
-
-function isEventEnded(start, end) {
-  const now = toMMDD(new Date());
-  if (!start || start > now) return false;
-  if (end === "常設" || end === "20300101") return true;
-  return end < now;
-}
-
-// renderContent内の該当部分を書き換え（抜粋）
-const startEnd = parseRange(text);
-const start = startEnd.start;
-const end = startEnd.end;
-
-if (!showPast) {
-  if (!start || !end) continue;
-  if (isEventEnded(start, end)) continue;
-  if (!isEventOngoing(start, end) && !isEventUpcoming(start)) continue;
-}
-
+const now = new Date();
+now.setHours(11, 0, 0, 0); // 11:00に固定
 
 fetch('https://Shibanban2.github.io/bc-event/data.json')
   .then(res => res.json())
   .then(json => {
     data = json;
-    preprocessData(); // データ整理（ガチャ半額リセットの移動など）
+    preprocessData();
     renderContent('gatya', false);
   });
 
@@ -71,23 +24,21 @@ function preprocessData() {
 }
 
 function parseDateRange(text) {
-  const match = text.match(/^(\d{2})\/(\d{2})〜(\d{2})\/(\d{2})/);
+  const match = text.match(/(\d{2})\/(\d{2})[〜~](\d{2})\/(\d{2})/);
   if (!match) return { start: null, end: null };
 
   const year = new Date().getFullYear();
-  const start = new Date(year, parseInt(match[1]) - 1, parseInt(match[2]), 11, 0, 0); // 11:00開始
-  const end = new Date(year, parseInt(match[3]) - 1, parseInt(match[4]), 11, 0, 0);   // 11:00終了
+  const start = new Date(year, parseInt(match[1]) - 1, parseInt(match[2]), 11, 0, 0);
+  const end = new Date(year, parseInt(match[3]) - 1, parseInt(match[4]), 11, 0, 0);
   return { start, end };
 }
 
-function renderContent(id, showPast) {
+function renderContent(id, showAll) {
   const container = document.getElementById(id);
   container.innerHTML = '';
 
   const order = ['gatya', 'sale', 'item', 'mission'];
-  const sections = id === 'all'
-    ? order
-    : [id];
+  const sections = id === 'all' ? order : [id];
 
   for (const key of sections) {
     const title = document.createElement('div');
@@ -103,22 +54,21 @@ function renderContent(id, showPast) {
       const text = typeof entry === 'string' ? entry : entry.title;
       const detail = typeof entry === 'string' ? '' : entry.detail;
 
-      // 除外条件
       if (key === 'gatya' && (/プラチナガチャ|レジェンドガチャ/.test(text))) continue;
       if (key === 'item' && (/道場報酬|報酬設定|ログボ:35030|ログボ:35031| ログボ:35032|ログボ:981/.test(text))) continue;
       if (key === 'sale' && (/進化の緑マタタビ|進化の紫マタタビ|進化の赤マタタビ|進化の青マタタビ|進化の黄マタタビ|絶・誘惑のシンフォニー|地図グループ16|地図グループ17|地図グループ18/.test(text))) continue;
-    　if (key === 'mission' && (/にゃんチケドロップステージを3回クリアしよう|XPドロップステージを5回クリアしよう|レジェンドストーリーを5回クリアしよう|ガマトトを探検に出発させて7回探検終了させよう|ウィークリーミッションをすべてクリアしよう|ガマトトを探検に出発させて10回探検終了させよう|レジェンドストーリーを10回クリアしよう|対象ステージは「にゃんこミッションとは？」をご確認下さい|ガマトトを探検に出発させて10回探検終了させよう|マタタビドロップステージを3回クリアしよう|おかえりミッション/.test(text))) continue;
-      
-      const startDate = parseDateRange(text);
-      if (!showPast) {
-  if (!start || !end) continue;
-  if (now < start || now >= end) continue;
-}
+      if (key === 'mission' && (/にゃんチケドロップステージを3回クリアしよう|ガマトトを探検に出発させて10回探検終了させよう|XPドロップステージを5回クリアしよう|レジェンドストーリーを5回クリアしよう|ガマトトを探検に出発させて7回探検終了させよう|ウィークリーミッションをすべてクリアしよう|ガマトトを探検に出発させて10回探検終了させよう|レジェンドストーリーを10回クリアしよう|対象ステージは「にゃんこミッションとは？」をご確認下さい|マタタビドロップステージを3回クリアしよう|おかえりミッション/.test(text))) continue;
+
+      const { start, end } = parseDateRange(text);
+      if (!start || !end) continue;
+
+      if (!showAll) {
+        if (now < start || now >= end || (end.getFullYear() === 2030 || /常設/.test(text))) continue;
+      }
 
       const div = document.createElement('div');
       div.className = 'event-card';
 
-      // 色分け
       if (!/ミッション/.test(text)) {
         if (/祭|確定|レジェンドクエスト|風雲にゃんこ塔|異界にゃんこ塔|グランドアビス|闇目|ねこの目洞窟|ガチャ半額リセット|確率2倍|にゃんこスロット|必要/.test(text)) {
           div.classList.add('red');
@@ -128,8 +78,6 @@ function renderContent(id, showPast) {
       }
 
       div.innerHTML = text;
-
-      // モーダル対応（gatya, item, saleのみ）
       if (detail) {
         div.addEventListener('click', () => openModal(detail));
       }
