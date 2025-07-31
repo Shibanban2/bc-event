@@ -7,14 +7,12 @@ fetch('https://Shibanban2.github.io/bc-event/data.json')
   .then(json => {
     data = json;
     preprocessData();
-    renderContent('gatya', false);
+    showTab('gatya'); // 初期表示を"gatya"に
   });
 
 function preprocessData() {
   if (data.item) {
-    const moved = data.item.filter(e =>
-      e.title && /ガチャ半額リセット/.test(e.title)
-    );
+    const moved = data.item.filter(e => e.title && /ガチャ半額リセット/.test(e.title));
     if (moved.length > 0) {
       data.item = data.item.filter(e => !/ガチャ半額リセット/.test(e.title));
       data.gatya = [...moved, ...(data.gatya || [])];
@@ -23,7 +21,7 @@ function preprocessData() {
 }
 
 function parseDateRange(text) {
-  const match = text.match(/^(\d{2})\/(\d{2})〜(\d{2})\/(\d{2})/);
+  const match = text.match(/(\d{2})\/(\d{2})〜(\d{2})\/(\d{2})/);
   if (!match) return { start: null, end: null };
 
   const year = now.getFullYear();
@@ -31,10 +29,20 @@ function parseDateRange(text) {
   const end = new Date(year, parseInt(match[3]) - 1, parseInt(match[4]), 11, 0, 0);
 
   if (/常設|20300101/.test(text)) {
-    return { start, end: "常設" };
+    return { start, end: 'permanent' };
   }
 
   return { start, end };
+}
+
+function isEventVisible({ start, end }, showPast) {
+  if (end === 'permanent') return true;
+  if (!start || !end) return false;
+
+  if (now < start) return false; // 未来
+  if (now > end) return false;   // 終了
+
+  return true; // 開催中
 }
 
 function renderContent(id, showPast) {
@@ -58,28 +66,17 @@ function renderContent(id, showPast) {
       const text = typeof entry === 'string' ? entry : entry.title;
       const detail = typeof entry === 'string' ? '' : entry.detail;
 
-      // 除外
       if (key === 'gatya' && (/プラチナガチャ|レジェンドガチャ/.test(text))) continue;
       if (key === 'item' && (/道場報酬|報酬設定|ログボ:35030|ログボ:35031| ログボ:35032|ログボ:981/.test(text))) continue;
       if (key === 'sale' && (/進化の緑マタタビ|進化の紫マタタビ|進化の赤マタタビ|進化の青マタタビ|進化の黄マタタビ|絶・誘惑のシンフォニー|地図グループ16|地図グループ17|地図グループ18/.test(text))) continue;
       if (key === 'mission' && (/にゃんチケドロップステージを3回クリアしよう|XPドロップステージを5回クリアしよう|レジェンドストーリーを5回クリアしよう|ガマトトを探検に出発させて7回探検終了させよう|ウィークリーミッションをすべてクリアしよう|ガマトトを探検に出発させて10回探検終了させよう|レジェンドストーリーを10回クリアしよう|対象ステージは「にゃんこミッションとは？」をご確認下さい|マタタビドロップステージを3回クリアしよう|おかえりミッション/.test(text))) continue;
 
-      const { start, end } = parseDateRange(text);
-
-      if (!showPast) {
-        if (end === "常設" || end === "20300101") {
-          // 常設系は常に表示
-        } else {
-          if (!start || !end) continue;
-          if (now < start) continue; // 未来
-          if (now > end) continue;   // 終了
-        }
-      }
+      const range = parseDateRange(text);
+      if (!isEventVisible(range, showPast)) continue;
 
       const div = document.createElement('div');
       div.className = 'event-card';
 
-      // 色分け
       if (!/ミッション/.test(text)) {
         if (/祭|確定|レジェンドクエスト|風雲にゃんこ塔|異界にゃんこ塔|グランドアビス|闇目|ねこの目洞窟|ガチャ半額リセット|確率2倍|にゃんこスロット|必要/.test(text)) {
           div.classList.add('red');
@@ -153,3 +150,4 @@ document.getElementById('save-btn').addEventListener('click', () => {
     link.click();
   });
 });
+
