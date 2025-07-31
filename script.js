@@ -24,14 +24,21 @@ function preprocessData() {
 }
 
 function parseDateRange(text) {
-  const match = text.match(/(\d{2})\/(\d{2})[〜~](\d{2})\/(\d{2})/);
+  const match = text.match(/^(\d{2})\/(\d{2})〜(\d{2})\/(\d{2})/);
   if (!match) return { start: null, end: null };
 
   const year = new Date().getFullYear();
-  const start = new Date(year, parseInt(match[1]) - 1, parseInt(match[2]), 11, 0, 0);
-  const end = new Date(year, parseInt(match[3]) - 1, parseInt(match[4]), 11, 0, 0);
+  const start = new Date(year, parseInt(match[1]) - 1, parseInt(match[2]), 11, 0, 0); // 11:00開始
+  const end = new Date(year, parseInt(match[3]) - 1, parseInt(match[4]), 11, 0, 0);   // 11:00終了
+
+  // 「常設」などの表記があるか検出
+  if (/常設|20300101/.test(text)) {
+    return { start, end: "常設" }; // 終了日を「常設」と明示
+  }
+
   return { start, end };
 }
+
 
 function renderContent(id, showAll) {
   const container = document.getElementById(id);
@@ -59,12 +66,15 @@ function renderContent(id, showAll) {
       if (key === 'sale' && (/進化の緑マタタビ|進化の紫マタタビ|進化の赤マタタビ|進化の青マタタビ|進化の黄マタタビ|絶・誘惑のシンフォニー|地図グループ16|地図グループ17|地図グループ18/.test(text))) continue;
       if (key === 'mission' && (/にゃんチケドロップステージを3回クリアしよう|ガマトトを探検に出発させて10回探検終了させよう|XPドロップステージを5回クリアしよう|レジェンドストーリーを5回クリアしよう|ガマトトを探検に出発させて7回探検終了させよう|ウィークリーミッションをすべてクリアしよう|ガマトトを探検に出発させて10回探検終了させよう|レジェンドストーリーを10回クリアしよう|対象ステージは「にゃんこミッションとは？」をご確認下さい|マタタビドロップステージを3回クリアしよう|おかえりミッション/.test(text))) continue;
 
-      const { start, end } = parseDateRange(text);
-      if (!start || !end) continue;
+     const { start, end } = parseDateRange(text);
 
-      if (!showAll) {
-        if (now < start || now >= end || (end.getFullYear() === 2030 || /常設/.test(text))) continue;
-      }
+if (!showPast) {
+  // 終了日が過ぎている（常設以外） → 表示しない
+  if (end && end !== "常設" && end !== "20300101" && now > end) continue;
+
+  // 開始日がまだ来ていない（終了日が常設以外） → 表示しない
+  if (start && now < start && end !== "常設" && end !== "20300101") continue;
+}
 
       const div = document.createElement('div');
       div.className = 'event-card';
