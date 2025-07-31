@@ -57,6 +57,7 @@ function renderContent(id, showPast) {
       // 除外条件
       if (key === 'gatya' && (/プラチナガチャ|レジェンドガチャ/.test(text))) continue;
       if (key === 'item' && (/道場報酬|報酬設定/.test(text))) continue;
+      if (key === 'sale' && (/進化の緑マタタビ|進化の紫マタタビ|進化の赤マタタビ|進化の青マタタビ|進化の黄マタタビ|絶・誘惑のシンフォニー|地図グループ16|地図グループ17|地図グループ18/.test(text))) continue;
 
       const startDate = parseStartDate(text);
       if (!showPast && startDate && startDate < now) continue;
