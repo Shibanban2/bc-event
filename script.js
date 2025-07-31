@@ -1,13 +1,15 @@
+// script.js
 let data = {};
+
 const now = new Date();
-now.setHours(11, 0, 0, 0); // 11:00 固定
+now.setHours(11, 0, 0, 0);
 
 fetch('https://Shibanban2.github.io/bc-event/data.json')
   .then(res => res.json())
   .then(json => {
     data = json;
     preprocessData();
-    showTab('gatya'); // 初期表示を"gatya"に
+    renderContent('gatya', false);
   });
 
 function preprocessData() {
@@ -21,36 +23,28 @@ function preprocessData() {
 }
 
 function parseDateRange(text) {
-  const match = text.match(/(\d{2})\/(\d{2})〜(\d{2})\/(\d{2})/);
+  const match = text.match(/(\d{2})\/(\d{2})[〜~\-―](\d{2})\/(\d{2})/);
   if (!match) return { start: null, end: null };
 
   const year = now.getFullYear();
-  const start = new Date(year, parseInt(match[1]) - 1, parseInt(match[2]), 11, 0, 0);
-  const end = new Date(year, parseInt(match[3]) - 1, parseInt(match[4]), 11, 0, 0);
+  const start = new Date(year, parseInt(match[1]) - 1, parseInt(match[2]));
+  const end = new Date(year, parseInt(match[3]) - 1, parseInt(match[4]));
 
-  if (/常設|20300101/.test(text)) {
-    return { start, end: 'permanent' };
-  }
+  start.setHours(11, 0, 0, 0);
+  end.setHours(11, 0, 0, 0);
 
   return { start, end };
 }
 
-function isEventVisible({ start, end }, showPast) {
-  if (end === 'permanent') return true;
-  if (!start || !end) return false;
-
-  if (now < start) return false; // 未来
-  if (now > end) return false;   // 終了
-
-  return true; // 開催中
-}
-
-function renderContent(id, showPast) {
+function renderContent(id, showAll) {
   const container = document.getElementById(id);
   container.innerHTML = '';
 
   const order = ['gatya', 'sale', 'item', 'mission'];
   const sections = id === 'all' ? order : [id];
+
+  const today = new Date();
+  today.setHours(11, 0, 0, 0);
 
   for (const key of sections) {
     const title = document.createElement('div');
@@ -61,18 +55,31 @@ function renderContent(id, showPast) {
     const entries = data[key] || [];
     let count = 0;
 
-    for (let i = 0; i < entries.length; i++) {
-      const entry = entries[i];
+    for (const entry of entries) {
       const text = typeof entry === 'string' ? entry : entry.title;
       const detail = typeof entry === 'string' ? '' : entry.detail;
 
+      // 除外条件（ここは元のまま、省略）
       if (key === 'gatya' && (/プラチナガチャ|レジェンドガチャ/.test(text))) continue;
       if (key === 'item' && (/道場報酬|報酬設定|ログボ:35030|ログボ:35031| ログボ:35032|ログボ:981/.test(text))) continue;
       if (key === 'sale' && (/進化の緑マタタビ|進化の紫マタタビ|進化の赤マタタビ|進化の青マタタビ|進化の黄マタタビ|絶・誘惑のシンフォニー|地図グループ16|地図グループ17|地図グループ18/.test(text))) continue;
       if (key === 'mission' && (/にゃんチケドロップステージを3回クリアしよう|XPドロップステージを5回クリアしよう|レジェンドストーリーを5回クリアしよう|ガマトトを探検に出発させて7回探検終了させよう|ウィークリーミッションをすべてクリアしよう|ガマトトを探検に出発させて10回探検終了させよう|レジェンドストーリーを10回クリアしよう|対象ステージは「にゃんこミッションとは？」をご確認下さい|マタタビドロップステージを3回クリアしよう|おかえりミッション/.test(text))) continue;
 
-      const range = parseDateRange(text);
-      if (!isEventVisible(range, showPast)) continue;
+    const { start, end } = parseDateRange(text);
+      const isPermanent = /常設|#常設/.test(text);
+
+      let show = false;
+
+      if (showAll) {
+        show = (start && end && today >= start && today <= end)
+             || (start && today < start)
+             || isPermanent;
+      } else {
+        show = (start && today < start)
+             || isPermanent;
+      }
+
+      if (!show) continue;
 
       const div = document.createElement('div');
       div.className = 'event-card';
@@ -150,4 +157,3 @@ document.getElementById('save-btn').addEventListener('click', () => {
     link.click();
   });
 });
-
