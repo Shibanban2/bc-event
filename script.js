@@ -1,25 +1,32 @@
 let data = {};
 const now = new Date();
-now.setHours(11, 0, 0, 0); // 11:00に固定
+// 現在日付を MMDD の形式に変換
+const nowMMDD = String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
 
-const upcomingEvents = [];
-const activeEvents = [];
+const isEventOngoing = (start, end) => {
+  // 開始日・終了日が MMDD 形式と仮定する（例: "0731"）
+  if (!start || start > nowMMDD) return false; // まだ開始してないなら開催中じゃない
 
-eventList.forEach(event => {
-  const start = new Date(event.start);
-  const end = event.end === "20300101" ? "PERMANENT" : new Date(event.end);
+  // 終了日が常設 or 20300101 などなら、開始日を過ぎた時点で終了扱い
+  if (end === "常設" || end === "20300101") return false;
 
-  if (now < start) {
-    // 開始前
-    upcomingEvents.push(event);
-  } else if (end === "PERMANENT") {
-    // 常設 → 開始済みなら非表示（= 何もしない）
-  } else if (now < end) {
-    // 開催中
-    activeEvents.push(event);
-  }
-  // else: 終了済み → 何もしない（表示しない）
-});
+  // 終了日が今日以降なら開催中
+  return end >= nowMMDD;
+};
+
+const isEventUpcoming = (start) => {
+  return start > nowMMDD;
+};
+
+const isEventEnded = (start, end) => {
+  if (!start || start > nowMMDD) return false;
+
+  // 終了日が常設 or 20300101 → 開始日を過ぎたら「終了扱い」
+  if (end === "常設" || end === "20300101") return true;
+
+  return end < nowMMDD;
+};
+
 
 
 fetch('https://Shibanban2.github.io/bc-event/data.json')
