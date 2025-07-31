@@ -1,8 +1,6 @@
-// script.js
 let data = {};
-
 const now = new Date();
-now.setHours(11, 0, 0, 0);
+now.setHours(11, 0, 0, 0); // 11:00基準に変更
 
 fetch('https://Shibanban2.github.io/bc-event/data.json')
   .then(res => res.json())
@@ -13,6 +11,7 @@ fetch('https://Shibanban2.github.io/bc-event/data.json')
   });
 
 function preprocessData() {
+  // item → gatya に「ガチャ半額リセット」を移動（先頭に）
   if (data.item) {
     const moved = data.item.filter(e => e.title && /ガチャ半額リセット/.test(e.title));
     if (moved.length > 0) {
@@ -22,29 +21,39 @@ function preprocessData() {
   }
 }
 
-function parseDateRange(text) {
-  const match = text.match(/(\d{2})\/(\d{2})[〜~\-―](\d{2})\/(\d{2})/);
-  if (!match) return { start: null, end: null };
+// MM/DD 〜 MM/DD 形式の日付をパース
+function parseDates(text) {
+  const match = text.match(/(\d{2})\/(\d{2})[^0-9]*(\d{2})\/(\d{2})|(\d{2})\/(\d{2})/);
+  const year = new Date().getFullYear();
 
-  const year = now.getFullYear();
-  const start = new Date(year, parseInt(match[1]) - 1, parseInt(match[2]));
-  const end = new Date(year, parseInt(match[3]) - 1, parseInt(match[4]));
+  let start = null;
+  let end = null;
 
-  start.setHours(11, 0, 0, 0);
-  end.setHours(11, 0, 0, 0);
+  if (match) {
+    if (match[1]) {
+      // 範囲指定（例: 07/04〜07/28）
+      start = new Date(year, parseInt(match[1]) - 1, parseInt(match[2]));
+      end = new Date(year, parseInt(match[3]) - 1, parseInt(match[4]));
+      end.setHours(23, 59, 59, 999);
+    } else if (match[5]) {
+      // 開始日だけ
+      start = new Date(year, parseInt(match[5]) - 1, parseInt(match[6]));
+    }
+  }
 
   return { start, end };
 }
 
-function renderContent(id, showAll) {
+function isPermanent(text) {
+  return /常設|#常設/i.test(text);
+}
+
+function renderContent(id, showCurrent) {
   const container = document.getElementById(id);
   container.innerHTML = '';
 
   const order = ['gatya', 'sale', 'item', 'mission'];
   const sections = id === 'all' ? order : [id];
-
-  const today = new Date();
-  today.setHours(11, 0, 0, 0);
 
   for (const key of sections) {
     const title = document.createElement('div');
@@ -55,35 +64,39 @@ function renderContent(id, showAll) {
     const entries = data[key] || [];
     let count = 0;
 
-    for (const entry of entries) {
+    for (let i = 0; i < entries.length; i++) {
+      const entry = entries[i];
       const text = typeof entry === 'string' ? entry : entry.title;
       const detail = typeof entry === 'string' ? '' : entry.detail;
 
-      // 除外条件（ここは元のまま、省略）
+      // 除外ルール
       if (key === 'gatya' && (/プラチナガチャ|レジェンドガチャ/.test(text))) continue;
-      if (key === 'item' && (/道場報酬|報酬設定|ログボ:35030|ログボ:35031| ログボ:35032|ログボ:981/.test(text))) continue;
+      if (key === 'item' && (/道場報酬|報酬設定|ログボ:35030|ログボ:35031|ログボ:35032|ログボ:981/.test(text))) continue;
       if (key === 'sale' && (/進化の緑マタタビ|進化の紫マタタビ|進化の赤マタタビ|進化の青マタタビ|進化の黄マタタビ|絶・誘惑のシンフォニー|地図グループ16|地図グループ17|地図グループ18/.test(text))) continue;
-      if (key === 'mission' && (/にゃんチケドロップステージを3回クリアしよう|XPドロップステージを5回クリアしよう|レジェンドストーリーを5回クリアしよう|ガマトトを探検に出発させて7回探検終了させよう|ウィークリーミッションをすべてクリアしよう|ガマトトを探検に出発させて10回探検終了させよう|レジェンドストーリーを10回クリアしよう|対象ステージは「にゃんこミッションとは？」をご確認下さい|マタタビドロップステージを3回クリアしよう|おかえりミッション/.test(text))) continue;
+      if (key === 'mission' && (/にゃんチケドロップ|XPドロップ|レジェンドストーリー|ガマトトを探検|ウィークリーミッション|マタタビドロップステージ|おかえりミッション/.test(text))) continue;
 
-    const { start, end } = parseDateRange(text);
-      const isPermanent = /常設|#常設/.test(text);
+      const { start, end } = parseDates(text);
+      const permanent = isPermanent(text);
 
-      let show = false;
-
-      if (showAll) {
-        show = (start && end && today >= start && today <= end)
-             || (start && today < start)
-             || isPermanent;
+      // 表示条件
+      let shouldShow = false;
+      if (showCurrent) {
+        // 「開催中のイベントも表示」にチェックあり → 全部表示
+        shouldShow =
+          permanent ||
+          (start && now >= start && (!end || now <= end)) ||
+          (!start && !end);
       } else {
-        show = (start && today < start)
-             || isPermanent;
+        // 通常時（未来のみ）
+        shouldShow = permanent || (start && now < start);
       }
 
-      if (!show) continue;
+      if (!shouldShow) continue;
 
       const div = document.createElement('div');
       div.className = 'event-card';
 
+      // 色分け
       if (!/ミッション/.test(text)) {
         if (/祭|確定|レジェンドクエスト|風雲にゃんこ塔|異界にゃんこ塔|グランドアビス|闇目|ねこの目洞窟|ガチャ半額リセット|確率2倍|にゃんこスロット|必要/.test(text)) {
           div.classList.add('red');
