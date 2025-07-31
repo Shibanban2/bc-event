@@ -1,32 +1,52 @@
 let data = {};
-const now = new Date();
-// 現在日付を MMDD の形式に変換
-const nowMMDD = String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
+// 追加: 日付を MMDD 形式へ変換
+const toMMDD = (date) => String(date.getMonth() + 1).padStart(2, '0') + String(date.getDate()).padStart(2, '0');
 
-const isEventOngoing = (start, end) => {
-  // 開始日・終了日が MMDD 形式と仮定する（例: "0731"）
-  if (!start || start > nowMMDD) return false; // まだ開始してないなら開催中じゃない
+// 日付範囲を MMDD で解析する（常設対応）
+function parseRange(text) {
+  const match = text.match(/(\d{2})\/(\d{2})〜(\d{2})\/(\d{2})/);
+  if (!match) return { start: null, end: null };
 
-  // 終了日が常設 or 20300101 などなら、開始日を過ぎた時点で終了扱い
+  const year = new Date().getFullYear();
+  const startDate = new Date(year, Number(match[1]) - 1, Number(match[2]), 11, 0, 0);
+  const endDate = new Date(year, Number(match[3]) - 1, Number(match[4]), 11, 0, 0);
+
+  return {
+    start: toMMDD(startDate),
+    end: toMMDD(endDate),
+  };
+}
+
+// イベント状態チェック
+function isEventOngoing(start, end) {
+  const now = toMMDD(new Date());
+  if (!start || start > now) return false;
   if (end === "常設" || end === "20300101") return false;
+  return end >= now;
+}
 
-  // 終了日が今日以降なら開催中
-  return end >= nowMMDD;
-};
+function isEventUpcoming(start) {
+  const now = toMMDD(new Date());
+  return start > now;
+}
 
-const isEventUpcoming = (start) => {
-  return start > nowMMDD;
-};
-
-const isEventEnded = (start, end) => {
-  if (!start || start > nowMMDD) return false;
-
-  // 終了日が常設 or 20300101 → 開始日を過ぎたら「終了扱い」
+function isEventEnded(start, end) {
+  const now = toMMDD(new Date());
+  if (!start || start > now) return false;
   if (end === "常設" || end === "20300101") return true;
+  return end < now;
+}
 
-  return end < nowMMDD;
-};
+// renderContent内の該当部分を書き換え（抜粋）
+const startEnd = parseRange(text);
+const start = startEnd.start;
+const end = startEnd.end;
 
+if (!showPast) {
+  if (!start || !end) continue;
+  if (isEventEnded(start, end)) continue;
+  if (!isEventOngoing(start, end) && !isEventUpcoming(start)) continue;
+}
 
 
 fetch('https://Shibanban2.github.io/bc-event/data.json')
