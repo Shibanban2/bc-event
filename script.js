@@ -80,16 +80,16 @@ function renderContent(id, showCurrent) {
 
       // 表示条件
       let shouldShow = false;
-      if (showCurrent) {
-        // 「開催中のイベントも表示」にチェックあり → 全部表示
-        shouldShow =
-          permanent ||
-          (start && now >= start && (!end || now <= end)) ||
-          (!start && !end);
-      } else {
-        // 通常時（未来のみ）
-        shouldShow = permanent || (start && now < start);
-      }
+    if (showCurrent) {
+  // ✅ 「開催中のイベントも表示」チェックあり → 常設 + 開催中 + 未来すべて表示
+  shouldShow =
+    permanent ||
+    (start && now >= start && (!end || now <= end)) || // 開催中
+    (start && now < start); // 未来
+} else {
+  // ✅ 通常時 → 常設 + 未来のみ
+  shouldShow = permanent || (start && now < start);
+}
 
       if (!shouldShow) continue;
 
