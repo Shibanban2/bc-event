@@ -1,6 +1,26 @@
 let data = {};
 const now = new Date();
-now.setHours(11, 0, 0, 0); 
+now.setHours(11, 0, 0, 0); // 11:00に固定
+
+const upcomingEvents = [];
+const activeEvents = [];
+
+eventList.forEach(event => {
+  const start = new Date(event.start);
+  const end = event.end === "20300101" ? "PERMANENT" : new Date(event.end);
+
+  if (now < start) {
+    // 開始前
+    upcomingEvents.push(event);
+  } else if (end === "PERMANENT") {
+    // 常設 → 開始済みなら非表示（= 何もしない）
+  } else if (now < end) {
+    // 開催中
+    activeEvents.push(event);
+  }
+  // else: 終了済み → 何もしない（表示しない）
+});
+
 
 fetch('https://Shibanban2.github.io/bc-event/data.json')
   .then(res => res.json())
