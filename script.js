@@ -84,20 +84,13 @@ function renderContent(id, showCurrent) {
       div.className = 'event-card';
 
       if (!/ミッション/.test(text)) {
-        if (/確定|闇目|ガチャ半額リセット|確率2倍/.test(text)) {
+        if (/確定|闇目|ガチャ半額リセット/.test(text)) {
           div.classList.add('red');
         } else if (/異次元コロシアム|強襲|ランキングの間/.test(text)) {
           div.classList.add('blue');
         }
       }
 
-      if (detail && key === 'gatya') {
-        const idMatch = detail.match(/ID：[\s]*([0-9]+)/);
-        if (idMatch && idMatch[1]) {
-          const gachaId = idMatch[1];
-          detail += `\n<a href="https://ponosgames.com/information/appli/battlecats/gacha/rare/R${gachaId}.html" target="_blank" rel="noopener noreferrer"> 公式ページ</a>`;
-        }
-      }
 
       div.innerHTML = text;
 
