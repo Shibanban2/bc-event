@@ -11,7 +11,6 @@ fetch('https://Shibanban2.github.io/bc-event/data.json')
   });
 
 function preprocessData() {
-  // item → gatya に「ガチャ半額リセット」を移動（先頭に）
   if (data.item) {
     const moved = data.item.filter(e => e.title && /ガチャ半額リセット/.test(e.title));
     if (moved.length > 0) {
@@ -21,26 +20,21 @@ function preprocessData() {
   }
 }
 
-// MM/DD 〜 MM/DD 形式の日付をパース
 function parseDates(text) {
   const match = text.match(/(\d{2})\/(\d{2})[^0-9]*(\d{2})\/(\d{2})|(\d{2})\/(\d{2})/);
   const year = new Date().getFullYear();
-
   let start = null;
   let end = null;
 
   if (match) {
     if (match[1]) {
-      // 範囲指定（例: 07/04〜07/28）
       start = new Date(year, parseInt(match[1]) - 1, parseInt(match[2]));
       end = new Date(year, parseInt(match[3]) - 1, parseInt(match[4]));
       end.setHours(23, 59, 59, 999);
     } else if (match[5]) {
-      // 開始日だけ
       start = new Date(year, parseInt(match[5]) - 1, parseInt(match[6]));
     }
   }
-
   return { start, end };
 }
 
@@ -67,9 +61,8 @@ function renderContent(id, showCurrent) {
     for (let i = 0; i < entries.length; i++) {
       const entry = entries[i];
       const text = typeof entry === 'string' ? entry : entry.title;
-      const detail = typeof entry === 'string' ? '' : entry.detail;
+      let detail = typeof entry === 'string' ? '' : entry.detail;
 
-      // 除外ルール
       if (key === 'gatya' && (/プラチナガチャ|レジェンドガチャ/.test(text))) continue;
       if (key === 'item' && (/道場報酬|報酬設定|ログボ:35030|ログボ:35031|ログボ:35032|ログボ:981/.test(text))) continue;
       if (key === 'sale' && (/進化の緑マタタビ|進化の紫マタタビ|進化の赤マタタビ|進化の青マタタビ|進化の黄マタタビ|絶・誘惑のシンフォニー|地図グループ16|地図グループ17|地図グループ18/.test(text))) continue;
@@ -78,30 +71,31 @@ function renderContent(id, showCurrent) {
       const { start, end } = parseDates(text);
       const permanent = isPermanent(text);
 
-      // 表示条件
       let shouldShow = false;
-    if (showCurrent) {
-  // ✅ 「開催中のイベントも表示」チェックあり → 常設 + 開催中 + 未来すべて表示
-  shouldShow =
-    permanent ||
-    (start && now >= start && (!end || now <= end)) || // 開催中
-    (start && now < start); // 未来
-} else {
-  // ✅ 通常時 → 常設 + 未来のみ
-  shouldShow = permanent || (start && now < start);
-}
+      if (showCurrent) {
+        shouldShow = permanent || (start && now >= start && (!end || now <= end)) || (start && now < start);
+      } else {
+        shouldShow = permanent || (start && now < start);
+      }
 
       if (!shouldShow) continue;
 
       const div = document.createElement('div');
       div.className = 'event-card';
 
-      // 色分け
       if (!/ミッション/.test(text)) {
         if (/祭|確定|レジェンドクエスト|風雲にゃんこ塔|異界にゃんこ塔|グランドアビス|闇目|ねこの目洞窟|ガチャ半額リセット|確率2倍|にゃんこスロット|必要/.test(text)) {
           div.classList.add('red');
         } else if (/おまけアップ|異次元コロシアム|強襲|ランキングの間|ネコ基地トーク/.test(text)) {
           div.classList.add('blue');
+        }
+      }
+
+      if (detail && key === 'gatya') {
+        const idMatch = detail.match(/ID：[\s]*([0-9]+)/);
+        if (idMatch && idMatch[1]) {
+          const gachaId = idMatch[1];
+          detail += `\n<a href="https://ponosgames.com/information/appli/battlecats/gacha/rare/R${gachaId}.html" target="_blank" rel="noopener noreferrer">リンク</a>`;
         }
       }
 
