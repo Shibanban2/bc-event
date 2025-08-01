@@ -95,7 +95,7 @@ function renderContent(id, showCurrent) {
         const idMatch = detail.match(/ID：[\s]*([0-9]+)/);
         if (idMatch && idMatch[1]) {
           const gachaId = idMatch[1];
-          detail += `\n<a href="https://ponosgames.com/information/appli/battlecats/gacha/rare/R${gachaId}.html" target="_blank" rel="noopener noreferrer">リンク</a>`;
+          detail += `\n<a href="https://ponosgames.com/information/appli/battlecats/gacha/rare/R${gachaId}.html" target="_blank" rel="noopener noreferrer"> 公式ページ</a>`;
         }
       }
 
