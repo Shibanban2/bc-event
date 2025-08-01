@@ -84,9 +84,9 @@ function renderContent(id, showCurrent) {
       div.className = 'event-card';
 
       if (!/ミッション/.test(text)) {
-        if (/祭|確定|レジェンドクエスト|風雲にゃんこ塔|異界にゃんこ塔|グランドアビス|闇目|ねこの目洞窟|ガチャ半額リセット|確率2倍|にゃんこスロット|必要/.test(text)) {
+        if (/確定|闇目|ガチャ半額リセット|確率2倍/.test(text)) {
           div.classList.add('red');
-        } else if (/おまけアップ|異次元コロシアム|強襲|ランキングの間|ネコ基地トーク/.test(text)) {
+        } else if (/異次元コロシアム|強襲|ランキングの間/.test(text)) {
           div.classList.add('blue');
         }
       }
