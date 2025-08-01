@@ -1,6 +1,6 @@
 let data = {};
 const now = new Date();
-now.setHours(11, 0, 0, 0); // 11:00基準に変更
+now.setHours(11, 0, 0, 0);
 
 fetch('https://Shibanban2.github.io/bc-event/data.json')
   .then(res => res.json())
