@@ -2,71 +2,36 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>トークン表示</title>
+  <title>にゃんこスケジュール - 表表示</title>
   <style>
-    body { font-family: sans-serif; margin: 0; padding: 1rem; }
-    .tabs { display: flex; gap: 1rem; margin-bottom: 1rem; }
-    .tab { cursor: pointer; padding: 0.5rem 1rem; background: #eee; border-radius: 5px; }
-    .tab.active { background: #333; color: white; }
-    #tsvToggle { margin: 1rem 0; }
+    body { font-family: sans-serif; padding: 1rem; }
     table { border-collapse: collapse; width: 100%; }
-    th, td { border: 1px solid #ccc; padding: 0.5rem; }
-    pre { white-space: pre-wrap; background: #f0f0f0; padding: 1rem; }
+    td, th { border: 1px solid #ccc; padding: 4px; font-size: 0.9rem; }
+    th { background: #eee; }
   </style>
 </head>
 <body>
-  <h1>トークンデータ</h1>
-  <div class="tabs">
-    <div class="tab active" data-type="gatya">ガチャ</div>
-    <div class="tab" data-type="sale">セール</div>
-    <div class="tab" data-type="item">アイテム</div>
+  <h2>にゃんこイベントTSV（生データ）</h2>
+  <div>
+    <button onclick="loadTSV('gatya')">gatya</button>
+    <button onclick="loadTSV('sale')">sale</button>
+    <button onclick="loadTSV('item')">item</button>
   </div>
-
-  <button id="tsvToggle">TSV表示に切り替え</button>
-  <div id="tableContainer"></div>
+  <div id="table-container" style="margin-top: 1rem;"></div>
 
   <script>
-    let currentType = "gatya";
-    let isTSV = false;
-
-    const tabs = document.querySelectorAll(".tab");
-    const container = document.getElementById("tableContainer");
-    const toggleBtn = document.getElementById("tsvToggle");
-
-    tabs.forEach(tab => {
-      tab.addEventListener("click", () => {
-        tabs.forEach(t => t.classList.remove("active"));
-        tab.classList.add("active");
-        currentType = tab.dataset.type;
-        loadData();
-      });
-    });
-
-    toggleBtn.addEventListener("click", () => {
-      isTSV = !isTSV;
-      toggleBtn.textContent = isTSV ? "表形式に切り替え" : "TSV表示に切り替え";
-      loadData();
-    });
-
-    async function loadData() {
-      const url = `./${currentType}.tsv`;
-      const res = await fetch(url);
-      const text = await res.text();
-      if (isTSV) {
-        container.innerHTML = `<pre>${text}</pre>`;
-      } else {
-        const rows = text.trim().split("\n").map(line => line.split("\t"));
-        const table = document.createElement("table");
-        table.innerHTML = rows.map((row, i) =>
-          `<tr>${row.map(cell => `<${i === 0 ? "th" : "td"}>${cell}</${i === 0 ? "th" : "td"}>`).join("")}</tr>`
-        ).join("");
-        container.innerHTML = "";
-        container.appendChild(table);
-      }
+    function loadTSV(type) {
+      fetch(`../tsv/${type}.tsv`)
+        .then(res => res.text())
+        .then(text => {
+          const rows = text.trim().split('\n').map(row => row.split('\t'));
+          const html = '<table>' + rows.map(row =>
+            '<tr>' + row.map(cell => `<td>${cell}</td>`).join('') + '</tr>'
+          ).join('') + '</table>';
+          document.getElementById('table-container').innerHTML = html;
+        });
     }
-
-    loadData();
   </script>
 </body>
 </html>
+
