@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>アイテムスケジュール（生データ）</title>
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+  <h1>アイテムスケジュール（TSVそのまま）</h1>
+  <pre id="tsv-content">読み込み中...</pre>
+
+  <script>
+    async function loadTSV() {
+      const res = await fetch('../data/item.tsv');
+      const text = await res.text();
+      document.getElementById('tsv-content').textContent = text;
+    }
+    loadTSV();
+  </script>
+</body>
+</html>
