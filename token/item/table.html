@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>アイテムスケジュール 表形式</title>
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+  <h1>アイテムスケジュール（表形式）</h1>
+  <table id="tsv-table"></table>
+
+  <script>
+    async function loadTSV() {
+      const res = await fetch('../data/item.tsv');
+      const text = await res.text();
+      const rows = text.trim().split('\\n');
+      const table = document.getElementById('tsv-table');
+
+      for (const line of rows) {
+        const tr = document.createElement('tr');
+        line.split('\\t').forEach(cell => {
+          const td = document.createElement(rows.indexOf(line) === 0 ? 'th' : 'td');
+          td.textContent = cell;
+          tr.appendChild(td);
+        });
+        table.appendChild(tr);
+      }
+    }
+    loadTSV();
+  </script>
+</body>
+</html>
