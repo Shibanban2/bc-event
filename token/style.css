@@ -1,0 +1,29 @@
+body {
+  font-family: sans-serif;
+  background: #f9f9f9;
+  color: #333;
+  margin: 0;
+  padding: 1rem;
+}
+h1, h2 {
+  margin-bottom: 1rem;
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+th, td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: left;
+  width: 25%;
+}
+pre {
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
