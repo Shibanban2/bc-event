@@ -2,36 +2,17 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>にゃんこスケジュール - 表表示</title>
-  <style>
-    body { font-family: sans-serif; padding: 1rem; }
-    table { border-collapse: collapse; width: 100%; }
-    td, th { border: 1px solid #ccc; padding: 4px; font-size: 0.9rem; }
-    th { background: #eee; }
-  </style>
+  <title>イベントスケジュールまとめ</title>
+  <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
-  <h2>にゃんこイベントTSV（生データ）</h2>
-  <div>
-    <button onclick="loadTSV('gatya')">gatya</button>
-    <button onclick="loadTSV('sale')">sale</button>
-    <button onclick="loadTSV('item')">item</button>
-  </div>
-  <div id="table-container" style="margin-top: 1rem;"></div>
-
-  <script>
-    function loadTSV(type) {
-      fetch(`../tsv/${type}.tsv`)
-        .then(res => res.text())
-        .then(text => {
-          const rows = text.trim().split('\n').map(row => row.split('\t'));
-          const html = '<table>' + rows.map(row =>
-            '<tr>' + row.map(cell => `<td>${cell}</td>`).join('') + '</tr>'
-          ).join('') + '</table>';
-          document.getElementById('table-container').innerHTML = html;
-        });
-    }
-  </script>
+  <h1>スケジュール一覧</h1>
+  <ul>
+    <li><strong>アイテム</strong>：<a href="./item/table.html">表</a> / <a href="./item/raw.html">TSV</a></li>
+    <li><strong>ガチャ</strong>：<a href="./gatya/table.html">表</a> / <a href="./gatya/raw.html">TSV</a></li>
+    <li><strong>セール</strong>：<a href="./sale/table.html">表</a> / <a href="./sale/raw.html">TSV</a></li>
+  </ul>
 </body>
 </html>
+
 
