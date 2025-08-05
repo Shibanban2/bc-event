@@ -3,27 +3,22 @@
 <head>
   <meta charset="Shift_JIS">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ガチャ一覧</title>
+  <title>ガチャデータ</title>
   <style>
     body {
-      font-family: sans-serif;
-      background: #f8f8f8;
+      font-family: "Courier New", monospace;
+      background-color: #f8f8f8;
       margin: 0;
       padding: 1rem;
+      color: #000;
     }
-    table {
-      border-collapse: collapse;
-      width: 100%;
-      background: white;
-      box-shadow: 0 0 8px rgba(0,0,0,0.1);
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
+    pre {
       white-space: pre-wrap;
-    }
-    th {
-      background-color: #eee;
+      background: #fff;
+      padding: 1rem;
+      border: 1px solid #ccc;
+      overflow-x: auto;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
     }
     h1 {
       font-size: 1.5rem;
@@ -32,53 +27,23 @@
   </style>
 </head>
 <body>
-  <h1>ガチャ一覧</h1>
-  <div id="table-container">読み込み中...</div>
+  <h1>ガチャデータ（表示専用）</h1>
+  <pre id="tsv-display">読み込み中...</pre>
   <script>
     async function loadTSV(url) {
       const res = await fetch(url);
-      const text = await res.text();
-      const rows = text.split('\n').map(r => r.split('\t'));
-      return rows;
-    }
-
-    function createTable(data) {
-      const table = document.createElement('table');
-      const thead = document.createElement('thead');
-      const tbody = document.createElement('tbody');
-
-      const headerRow = document.createElement('tr');
-      for (const cell of data[0]) {
-        const th = document.createElement('th');
-        th.textContent = cell;
-        headerRow.appendChild(th);
-      }
-      thead.appendChild(headerRow);
-
-      for (let i = 1; i < data.length; i++) {
-        const row = document.createElement('tr');
-        for (const cell of data[i]) {
-          const td = document.createElement('td');
-          td.textContent = cell;
-          row.appendChild(td);
-        }
-        tbody.appendChild(row);
-      }
-
-      table.appendChild(thead);
-      table.appendChild(tbody);
-      return table;
+      const buffer = await res.arrayBuffer();
+      const decoder = new TextDecoder("shift-jis");
+      return decoder.decode(buffer);
     }
 
     (async () => {
       const type = location.pathname.split('/').pop();
       const url = `https://shibanban2.github.io/bc-event/token/${type}.tsv`;
-      const rows = await loadTSV(url);
-      const table = createTable(rows);
-      const container = document.getElementById('table-container');
-      container.textContent = '';
-      container.appendChild(table);
+      const text = await loadTSV(url);
+      document.getElementById('tsv-display').textContent = text;
     })();
   </script>
 </body>
 </html>
+
