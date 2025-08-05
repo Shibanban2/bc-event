@@ -1,16 +1,62 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <title>TSVダウンロードページ</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>にゃんこイベント ダウンロード</title>
+  <style>
+    body {
+      font-family: "Helvetica Neue", sans-serif;
+      background: #f8f9fa;
+      margin: 0;
+      padding: 2rem;
+      color: #333;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: #fff;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      font-size: 1.8rem;
+      margin-bottom: 1.5rem;
+    }
+    .file-list {
+      list-style: none;
+      padding: 0;
+    }
+    .file-list li {
+      margin: 1rem 0;
+      font-size: 1.1rem;
+    }
+    .file-list a {
+      text-decoration: none;
+      color: #007bff;
+      font-weight: bold;
+    }
+    .file-list a:hover {
+      text-decoration: underline;
+    }
+  </style>
 </head>
 <body>
-  <h1>TSVファイル一覧</h1>
-  <ul>
-    <li><a href="./gatya.tsv" download>gatya.tsv をダウンロード</a></li>
-    <li><a href="./sale.tsv" download>sale.tsv をダウンロード</a></li>
-    <li><a href="./item.tsv" download>item.tsv をダウンロード</a></li>
-  </ul>
+  <div class="container">
+    <h1>にゃんこイベントデータ</h1>
+    <ul class="file-list">
+      <li><a href="./gatya_latest.tsv" download>gatya.tsv をダウンロード</a></li>
+      <li><a href="./gatya_latest.csv" download>gatya.csv をダウンロード</a></li>
+      <li><a href="./sale_latest.tsv" download>sale.tsv をダウンロード</a></li>
+      <li><a href="./sale_latest.csv" download>sale.csv をダウンロード</a></li>
+      <li><a href="./item_latest.tsv" download>item.tsv をダウンロード</a></li>
+      <li><a href="./item_latest.csv" download>item.csv をダウンロード</a></li>
+    </ul>
+    <p style="text-align:center; margin-top: 2rem;">
+      <a href="./view.html">Web上で表示</a>
+    </p>
+  </div>
 </body>
 </html>
