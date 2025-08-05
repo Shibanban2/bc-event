@@ -95,8 +95,13 @@ main {
 
 .hidden { display: none; }
 
-.red { color: red; font-weight: bold; }
-.blue { color: blue; font-weight: bold; }
+.event-card.red { background-color: #f88; }
+.event-card.blue { background-color: #88f; }
+.event-card.green { background-color: #8f8; }
+.event-card.yellow { background-color: #ff8; }
+.event-card.purple { background-color: #c8f; }
+.event-card.orange { background-color: #fa8; }
+
 
 /* モーダル */
 .modal-backdrop {
