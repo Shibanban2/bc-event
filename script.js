@@ -23,7 +23,7 @@ const colorRules = {
   gatya: [
     { regex: /確定|ガチャ半額リセット/, class: 'red' },
     { regex: /イベガチャ/, class: 'green' },
-    { regex: /闇目/ , class: 'orange' }
+    { regex: /闇目/ , class: 'orange' },
   ],
   sale: [
     { regex: /強襲/, class: 'blue' },
@@ -34,8 +34,8 @@ const colorRules = {
     { regex: /ログボ/, class: 'blue' },
   ],
   mission: [
-    { regex: /プラチナチケット|レジェンドチケット|プラチナのかけら/, class: 'red' }
-   { regex: /キャッツアイ【闇】/, class: 'purple' }
+    { regex: /プラチナチケット|レジェンドチケット|プラチナのかけら/, class: 'red' },
+   { regex: /キャッツアイ【闇】/, class: 'purple' },
  { regex: /レアチケット/, class: 'orange' }
   ]
 };
