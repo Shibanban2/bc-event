@@ -86,7 +86,7 @@ function renderContent(id, showCurrent) {
       if (!/ミッション/.test(text)) {
         if (/確定|闇目|ガチャ半額リセット/.test(text)) {
           div.classList.add('red');
-        } else if (/異次元コロシアム|強襲|ランキングの間/.test(text)) {
+        } else if (//.test(text)) {
           div.classList.add('blue');
         }
       }
