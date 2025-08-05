@@ -1,4 +1,3 @@
-document.addEventListener("DOMContentLoaded", function () {
 let data = {};
 const now = new Date();
 now.setHours(11, 0, 0, 0);
@@ -158,4 +157,4 @@ document.getElementById('save-btn').addEventListener('click', () => {
     link.click();
   });
 });
-});
+
