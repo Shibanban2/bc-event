@@ -19,26 +19,7 @@ function preprocessData() {
     }
   }
 }
-const colorRules = {
-  gatya: [
-    { regex: /確定|ガチャ半額リセット/, class: 'red' },
-    { regex: /イベガチャ/, class: 'green' },
-    { regex: /闇目/ , class: 'orange' },
-  ],
-  sale: [
-    { regex: /強襲/, class: 'blue' },
-    { regex: /ランキングの間/, class: 'green' }
-    { regex: /異次元コロシアム/, class: 'orange' },
-  ],
-  item: [
-    { regex: /ログボ/, class: 'blue' },
-  ],
-  mission: [
-    { regex: /プラチナチケット|レジェンドチケット|プラチナのかけら/, class: 'red' },
-   { regex: /キャッツアイ【闇】/, class: 'purple' },
- { regex: /レアチケット/, class: 'orange' }
-  ]
-};
+
 
 function parseDates(text) {
   const match = text.match(/(\d{2})\/(\d{2})[^0-9]*(\d{2})\/(\d{2})|(\d{2})\/(\d{2})/);
@@ -102,13 +83,14 @@ function renderContent(id, showCurrent) {
 
       const div = document.createElement('div');
       div.className = 'event-card';
-const rules = colorRules[key] || [];
-for (const rule of rules) {
-  if (rule.regex.test(text)) {
-    div.classList.add(rule.class);
-    break; // 最初にマッチした色だけ適用
+if (!/ミッション/.test(text)) {
+  if (/確定|闇目|ガチャ半額リセット/.test(text)) {
+    div.classList.add('red');
+  } else if (/強襲|ランキングの間|異次元コロシアム/.test(text)) {
+    div.classList.add('blue');
   }
 }
+
 
 
 
