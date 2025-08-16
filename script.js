@@ -160,3 +160,10 @@ document.getElementById('save-btn').addEventListener('click', () => {
   });
 });
 
+// キャッシュクリア更新ボタン
+document.getElementById('refresh-btn').addEventListener('click', () => {
+  // 現在のURLにタイムスタンプを付けて再読み込み
+  const url = window.location.origin + window.location.pathname + '?v=' + new Date().getTime();
+  window.location.href = url;
+});
+
