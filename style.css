@@ -7,9 +7,9 @@ body {
 header {
   background-color: #222;
   color: white;
-  padding: 0.6rem; /* さらに縮小 */
+  padding: 0.6rem; 
   text-align: center;
-  font-size: 1.3rem; /* さらに小さめ */
+  font-size: 1.3rem; 
   font-weight: bold;
   position: relative;
 }
@@ -17,7 +17,7 @@ header {
 .tsv-link, #save-btn {
   position: absolute;
   top: 0.6rem;
-  font-size: 0.7rem; /* 小さめ */
+  font-size: 0.7rem; 
   background-color: #444;
   color: white;
   padding: 3px 6px;
@@ -74,7 +74,7 @@ header {
 }
 
 .checkbox-container input {
-  transform: scale(1.2); /* 小さく */
+  transform: scale(1.2); 
   margin-right: 6px;
 }
 
@@ -113,7 +113,6 @@ main {
 .red { color: red; font-weight: bold; }
 .blue { color: blue; font-weight: bold; }
 
-/* モーダル */
 .modal-backdrop {
   display: none;
   position: fixed;
@@ -131,13 +130,13 @@ main {
   background: white;
   padding: 12px;
   border-radius: 6px;
-  max-width: 80%;     /* 横幅を少し狭める */
-  max-height: 70%;    /* 高さも少し小さく */
+  max-width: 80%;     
+  max-height: 70%;    
   overflow-y: auto;
   box-shadow: 0 0 6px rgba(0,0,0,0.3);
   position: relative;
-  font-size: 0.8rem;  /* ←ここで文字サイズを調整（小さめ） */
-  line-height: 1.4;   /* 読みやすさのため行間調整 */
+  font-size: 0.8rem;  
+  line-height: 1.4;   
 }
 
 
@@ -149,7 +148,6 @@ main {
   cursor: pointer;
 }
 
-/* ---- スマホ向けのサイズ調整 ---- */
 @media (max-width: 768px) {
   header {
     font-size: 1.1rem;
@@ -178,7 +176,6 @@ main {
   }
 }
 
-/* iPhone SEなどさらに小さい画面 */
 @media (max-width: 480px) {
   header {
     font-size: 1rem;
