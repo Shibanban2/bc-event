@@ -149,7 +149,10 @@ document.getElementById('save-btn').addEventListener('click', () => {
   const dd = String(today.getDate()).padStart(2, '0');
   const fileName = `nyanko_schedule_${yyyy}-${mm}-${dd}.png`;
 
-  html2canvas(document.body, {
+  // キャプチャ範囲を body 全体ではなく #event-list のみに変更
+  const target = document.querySelector('#event-list');
+
+  html2canvas(target, {
     backgroundColor: '#ffffff',
     useCORS: true
   }).then(canvas => {
