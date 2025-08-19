@@ -12,7 +12,6 @@ header {
   font-weight: bold;
   position: relative;
 
-  /* ここから追加：h2と同じ黒背景 */
   background: rgb(56,56,56); /* Old browsers */
   background: -moz-linear-gradient(top,  rgba(56,56,56,1) 0%, rgba(25,25,25,1) 26%, rgba(0,0,0,1) 51%, rgba(25,25,25,1) 83%, rgba(30,30,30,1) 100%); /* FF3.6+ */
   background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(56,56,56,1)), color-stop(26%,rgba(25,25,25,1)), color-stop(51%,rgba(0,0,0,1)), color-stop(83%,rgba(25,25,25,1)), color-stop(100%,rgba(30,30,30,1))); /* Chrome,Safari4+ */
