@@ -150,7 +150,7 @@ document.getElementById('save-btn').addEventListener('click', () => {
   const fileName = `nyanko_schedule_${yyyy}-${mm}-${dd}.png`;
 
   // キャプチャ範囲を body 全体ではなく #event-list のみに変更
-  const target = document.querySelector('#event-list');
+  const target = document.querySelector('#content');
 
   html2canvas(target, {
     backgroundColor: '#ffffff',
