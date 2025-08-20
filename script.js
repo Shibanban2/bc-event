@@ -160,7 +160,3 @@ document.getElementById('save-btn').addEventListener('click', () => {
   });
 });
 
-document.getElementById('refresh-btn').addEventListener('click', () => {
-  const url = window.location.origin + window.location.pathname + '?v=' + Date.now();
-  window.location.href = url;
-});
