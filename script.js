@@ -23,21 +23,51 @@ function preprocessData() {
 
 function parseDates(text) {
   const match = text.match(/(\d{2})\/(\d{2})[^0-9]*(\d{2})\/(\d{2})|(\d{2})\/(\d{2})/);
-  const year = new Date().getFullYear();
+  const now = new Date();
+  const thisYear = now.getFullYear();
   let start = null;
   let end = null;
 
   if (match) {
     if (match[1]) {
-      start = new Date(year, parseInt(match[1]) - 1, parseInt(match[2]));
-      end = new Date(year, parseInt(match[3]) - 1, parseInt(match[4]));
+      // 開始日
+      let startMonth = parseInt(match[1]);
+      let startDay = parseInt(match[2]);
+      let startYear = thisYear;
+
+      // 12月末 → 翌年補正
+      if (now.getMonth() + 1 === 12 && startMonth < 12) {
+        startYear++;
+      }
+
+      start = new Date(startYear, startMonth - 1, startDay);
+
+      // 終了日
+      let endMonth = parseInt(match[3]);
+      let endDay = parseInt(match[4]);
+      let endYear = thisYear;
+
+      if (now.getMonth() + 1 === 12 && endMonth < 12) {
+        endYear++;
+      }
+
+      end = new Date(endYear, endMonth - 1, endDay);
       end.setHours(23, 59, 59, 999);
     } else if (match[5]) {
-      start = new Date(year, parseInt(match[5]) - 1, parseInt(match[6]));
+      let startMonth = parseInt(match[5]);
+      let startDay = parseInt(match[6]);
+      let startYear = thisYear;
+
+      if (now.getMonth() + 1 === 12 && startMonth < 12) {
+        startYear++;
+      }
+
+      start = new Date(startYear, startMonth - 1, startDay);
     }
   }
   return { start, end };
 }
+
 
 function isPermanent(text) {
   return /常設|#常設/i.test(text);
