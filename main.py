@@ -2,8 +2,14 @@ import os
 import discord
 import aiohttp
 from dotenv import load_dotenv
-from keep_alive import keep_alive
 from datetime import datetime
+
+# keep_alive をインポート（エラー回避）
+try:
+    from keep_alive import keep_alive
+except ImportError:
+    def keep_alive():
+        print("keep_alive is not available, running without it")
 
 intents = discord.Intents.default()
 intents.messages = True
@@ -40,7 +46,7 @@ def _version_line(row_tokens):
     maxv = row_tokens[5] if len(row_tokens) > 5 else ""
     return f"v:{minv}-{maxv}"
 
-# GAS 準拠のフォーマット関数（修正）
+# GAS 準拠のフォーマット関数
 def format_date(d):
     if str(d) == "20300101":
         return "#永続"
@@ -56,6 +62,7 @@ def format_time(t):
         return "00:00"
 
 def get_day_of_week(date_str):
+    """YYYYMMDD 形式の日付から曜日（月～日）を返す"""
     try:
         date = datetime.strptime(str(date_str), "%Y%m%d")
         days = ["月", "火", "水", "木", "金", "土", "日"]
@@ -314,14 +321,13 @@ def parse_gatya_row(row, name_map, item_map, today_str="20250823"):
         print(f"Invalid row format: {row}, error: {e}")
         return output_lines
 
-    # 今日以降のスケジュールのみ
-    if start_date < today_str:
+    # 修正: 終了日が今日以降、かつ 20300101 でない場合に表示
+    if end_date < today_str or end_date == "20300101":
         return output_lines
 
     base_cols = {
         1: {"id": 10, "extra": 13, "normal": 14, "rare": 16, "super": 18, "ultra": 20, "confirm": 21, "legend": 22, "title": 24},
-        2: {"id": 25, "extra": 28, "normal": 29, "rare": 31, "super": 33, "ultra": 3
-5, "confirm": 36, "legend": 37, "title": 39},
+        2: {"id": 25, "extra": 28, "normal": 29, "rare": 31, "super": 33, "ultra": 35, "confirm": 36, "legend": 37, "title": 39},
         3: {"id": 40, "extra": 43, "normal": 44, "rare": 46, "super": 48, "ultra": 50, "confirm": 51, "legend": 52, "title": 54},
         4: {"id": 55, "extra": 58, "normal": 59, "rare": 61, "super": 63, "ultra": 65, "confirm": 66, "legend": 67, "title": 69},
         5: {"id": 70, "extra": 73, "normal": 74, "rare": 76, "super": 78, "ultra": 80, "confirm": 81, "legend": 82, "title": 84},
@@ -391,7 +397,7 @@ async def on_ready():
 async def on_message(message):
     if message.author == client.user:
         return
-    if message.content.lower() == "ping.":
+    if message.content.lower() == "s.ping":
         await message.channel.send("Pong.")
     if message.content.lower().startswith(f"{PREFIX}sale "):
         try:
@@ -409,7 +415,7 @@ async def on_message(message):
             found_ids = set()
             header = None
             if sale_id is not None:
-                stage_name = stage_map.get(sale_id, "不明なステージ")
+                stage_name = stage_map.get(sale_id, "")
                 header = f"[{sale_id} {stage_name}]"
             elif sale_name is not None:
                 header = f"[??? {sale_name}]"
@@ -436,11 +442,11 @@ async def on_message(message):
                 await message.channel.send("\n".join(outputs))
             else:
                 if header is None:
-                    header = "[不明]"
-                await message.channel.send(f"{header}\n該当するスケジュールは見つかりませんでした")
+                    header = "[]"
+                await message.channel.send(f"{header}\nスケジュールが見つかりませんでした")
         except Exception as e:
             print(f"Error in {PREFIX}sale command: {e}")
-            await message.channel.send("エラーが発生しました。管理者に連絡してください。")
+            await message.channel.send("エラーが発生しました。")
     if message.content.lower().startswith(f"{PREFIX}gt"):
         try:
             gatya_rows, name_map, item_map = await load_gatya_maps()
@@ -455,7 +461,7 @@ async def on_message(message):
                 await message.channel.send("今日以降のガチャ情報は見つかりませんでした")
         except Exception as e:
             print(f"Error in {PREFIX}gt command: {e}")
-            await message.channel.send("エラーが発生しました。管理者に連絡してください。")
+            await message.channel.send("エラーが発生しました。")
 
 # 実行
 keep_alive()
