@@ -1,3 +1,35 @@
+import os
+import discord
+import aiohttp
+from dotenv import load_dotenv
+from datetime import datetime
+import matplotlib.pyplot as plt
+from PIL import Image
+import io
+
+# keep_alive をインポート（エラー回避）
+try:
+    from keep_alive import keep_alive
+except ImportError:
+    def keep_alive():
+        print("keep_alive is not available, running without it")
+
+intents = discord.Intents.default()
+intents.messages = True
+intents.message_content = True
+client = discord.Client(intents=intents)
+
+load_dotenv(verbose=True)
+
+PREFIX = "s."
+
+# ... (既存の _fmt_time_str, _fmt_date_str, _fmt_date_range_line, _version_line は変更なし)
+
+def format_date(d):
+    if str(d) == "20300101":
+        return "#永続"
+    return f"{str(d)[4:6]}/{str(d)[6:8]}"
+
 def format_time(t):
     try:
         t = int(t)
@@ -7,7 +39,34 @@ def format_time(t):
     except (ValueError, TypeError):
         return "00:00"
 
-def parse_gatya_row(row, name_map, item_map, today_str="20250823"):
+def get_day_of_week(date_str):
+    """YYYYMMDD 形式の日付から曜日（月～日）を返す"""
+    try:
+        date = datetime.strptime(str(date_str), "%Y%m%d")
+        days = ["月", "火", "水", "木", "金", "土", "日"]
+        return days[date.weekday()]
+    except ValueError:
+        return ""
+
+# ... (fetch_tsv, load_stage_map, extract_event_ids, _find_last_schedule_segment, parse_schedule, build_monthly_note は変更なし)
+
+async def load_gatya_maps():
+    try:
+        gatya_url = "https://shibanban2.github.io/bc-event/token/gatya.tsv"
+        gatya_rows = await fetch_tsv(gatya_url)
+        name_url = "https://shibanban2.github.io/bc-event/token/gatyaName.tsv"
+        name_rows = await fetch_tsv(name_url)
+        name_map = {int(r[0]): r[1] for r in name_rows if r and r[0].isdigit()}
+        item_url = "https://shibanban2.github.io/bc-event/token/gatyaitem.tsv"
+        item_rows = await fetch_tsv(item_url)
+        item_map = {int(r[2]): r[3] for r in item_rows if r and len(r) > 3 and r[2].isdigit()}
+        print(f"Loaded gatya_rows: {len(gatya_rows)}, name_map: {len(name_map)}, item_map: {len(item_map)}")
+        return gatya_rows, name_map, item_map
+    except Exception as e:
+        print(f"Error in load_gatya_maps: {e}")
+        raise
+
+def parse_gatya_row(row, name_map, item_map, today_str="20250825"):  # 今日を2025/08/25に固定
     output_lines = []
     try:
         start_date = str(row[0])
@@ -21,7 +80,6 @@ def parse_gatya_row(row, name_map, item_map, today_str="20250823"):
         print(f"Invalid row format: {row}, error: {e}")
         return output_lines
 
-    # 終了日が今日以降、かつ 20300101 でない場合に表示
     if end_date < today_str or end_date == "20300101":
         return output_lines
 
@@ -35,7 +93,6 @@ def parse_gatya_row(row, name_map, item_map, today_str="20250823"):
         7: {"id": 100, "extra": 103, "normal": 104, "rare": 106, "super": 108, "ultra": 110, "confirm": 111, "legend": 112, "title": 114},
     }
 
-    # 特例: typeCode=4 かつ j=2
     if type_code == 4 and j == 2:
         try:
             id = int(row[27]) if len(row) > 27 and row[27].isdigit() else -1
@@ -54,7 +111,6 @@ def parse_gatya_row(row, name_map, item_map, today_str="20250823"):
         output_lines.append(col_k)
         return output_lines
 
-    # 通常処理
     col = base_cols.get(j)
     if not col:
         print(f"Invalid j value: {j}")
@@ -80,6 +136,40 @@ def parse_gatya_row(row, name_map, item_map, today_str="20250823"):
     output_lines.append(col_k)
     return output_lines
 
+def lookup_extra(code, item_map):
+    try:
+        return item_map.get(int(code), "")
+    except (ValueError, TypeError):
+        return ""
+
+# 画像生成関数
+def create_gacha_image(gacha_data):
+    plt.figure(figsize=(10, 6))
+    plt.title("ガチャスケジュール", fontsize=16, color='white')
+    plt.xlabel("日付", fontsize=12, color='white')
+    plt.ylabel("ガチャ名", fontsize=12, color='white')
+    plt.xticks(color='white')
+    plt.yticks(color='white')
+    plt.gca().set_facecolor('#1a1a1a')
+    plt.gcf().set_facecolor('#1a1a1a')
+
+    dates = [data.split('\n')[0] for data in gacha_data]
+    names = [data.split('\n')[1].replace('　', '').split(' ', 1)[1] for data in gacha_data]
+
+    plt.barh(names, [1] * len(names), color=['#ff9999', '#66b3ff'], align='center')
+    for i, (date, name) in enumerate(zip(dates, names)):
+        plt.text(0.5, i, date, ha='center', va='center', color='white')
+
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png', dpi=100, bbox_inches='tight')
+    buf.seek(0)
+    plt.close()
+    return buf
+
+@client.event
+async def on_ready():
+    print(f"ログインしました: {client.user.name}")
+
 @client.event
 async def on_message(message):
     if message.author == client.user:
@@ -89,7 +179,8 @@ async def on_message(message):
     if message.content.lower() == f"{PREFIX}help":
         await message.channel.send(
             "s.sale [ID or 名前]: ステージの販売スケジュールを表示。例: s.sale 50 や s.sale ガチャ\n"
-            "s.gt: 今日以降のガチャスケジュールを表示（終了日基準、永続は除く）。"
+            "s.gt: 今日以降のガチャスケジュールを表示（終了日基準、永続は除く）。\n"
+            "s.gti: ガチャスケジュールを画像で表示し、DiscordとTwitterに投稿。"
         )
     if message.content.lower().startswith(f"{PREFIX}sale "):
         try:
@@ -143,14 +234,26 @@ async def on_message(message):
         try:
             gatya_rows, name_map, item_map = await load_gatya_maps()
             outputs = []
-            today_str = datetime.now().strftime("%Y%m%d")  # 今日の日付（例：20250823）
+            today_str = datetime.now().strftime("%Y%m%d")  # 今日の日付 (2025/08/25 19:18 JST)
             for row in gatya_rows[1:]:  # ヘッダー行をスキップ
                 lines = parse_gatya_row(row, name_map, item_map, today_str)
                 outputs.extend(lines)
             if outputs:
+                # テキスト送信
                 await message.channel.send("\n".join(outputs))
+                # 画像生成と送信
+                img_buf = create_gacha_image(outputs)
+                await message.channel.send(file=discord.File(img_buf, filename="gacha_schedule.png"))
             else:
                 await message.channel.send("今日以降のガチャ情報は見つかりませんでした")
         except Exception as e:
             print(f"Error in {PREFIX}gt command: {e}")
             await message.channel.send("エラーが発生しました。")
+
+# 実行
+keep_alive()
+TOKEN = os.getenv("DISCORD_TOKEN")
+if TOKEN:
+    client.run(TOKEN)
+else:
+    print("Tokenが見つかりませんでした")
