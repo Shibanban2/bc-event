@@ -1,136 +1,110 @@
-function parseGatya() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName("gatya");
-  const gData = ss.getSheetByName("GData");
-  const verSheet = ss.getSheetByName("ver");
-  const output = ss.getSheetByName("gatya4");
-  output.clear();
+import requests
+import matplotlib.pyplot as plt
+import pandas as pd
+from datetime import datetime
+from io import StringIO
 
-  const rows = sheet.getDataRange().getValues();
-  const gDataValues = gData.getRange("A:D").getValues();
-  const verValues = verSheet.getRange("A1:A20").getValues().flat();
+# TSV URL
+URL = "https://shibanban2.github.io/bc-event/token/gatya.tsv"
 
-  const result = [];
+# TSVを取得
+response = requests.get(URL)
+if response.status_code != 200:
+    raise Exception(f"Failed to fetch TSV: Status code {response.status_code}")
 
-  // GData検索用
-  function lookupName(id) {
-    const entry = gDataValues.find(r => r[0] == id);
-    return entry ? entry[1] : `error [${id}] is not found...`;
-  }
-  function lookupExtra(code) {
-    const entry = gDataValues.find(r => r[2] == code);
-    return entry ? entry[3] : "";
-  }
+# TSVをデータフレームに変換
+tsv_data = StringIO(response.text)
+df = pd.read_csv(tsv_data, sep='\t')
 
-  // バージョン表記
-  function formatVer(num) {
-    const major = Math.floor(num / 10000);
-    const minor = Math.floor((num % 10000) / 100);
-    const patch = num % 100;
-    return `${major}.${minor}.${patch}`;
-  }
+# 今日の日付 (2025/08/25 19:56 JST)
+today = datetime.now().strftime("%Y%m%d")
 
-  function formatDate(d) {
-    if (d == 20300101) return "#永続";
-    return `${String(d).slice(4, 6)}/${String(d).slice(6, 8)}`;
-  }
+# ガチャデータをフィルタリング (終了日が今日以降かつ永続でない)
+gacha_data = df.iloc[1:].query("`2` >= @today and `2` != 20300101").copy()
 
-  function formatTime(t) {
-    if (!t || t == 0 || t == 1100) return ""; // 11:00 は省略
-    const hour = String(Math.floor(t / 100)).padStart(2, "0");
-    const min = String(t % 100).padStart(2, "0");
-    return `${hour}:${min}`;
-  }
+# 補助関数
+def format_date(d):
+    if d == 20300101:
+        return "#永続"
+    return f"{str(d)[4:6]}/{str(d)[6:8]}"
 
-  function formatRate(val) {
-    if (!val || val == 0) return "";
-    return String(val);  // ％ではなくそのまま数値で出力
-  }
+def format_time(t):
+    try:
+        t = int(t)
+        hour = str(t // 100).zfill(2)
+        min = str(t % 100).zfill(2)
+        return f"{hour}:{min}"
+    except (ValueError, TypeError):
+        return "00:00"
 
- for (let i = 1; i < rows.length; i++) {
-  const row = rows[i];
-  if (row[0] === "[end]") break;
+def get_day_of_week(date_str):
+    try:
+        date = datetime.strptime(str(date_str), "%Y%m%d")
+        days = ["月", "火", "水", "木", "金", "土", "日"]
+        return days[date.weekday()]
+    except ValueError:
+        return ""
 
-  const startDate = formatDate(row[0]);
-  const startTime = formatTime(row[1]);
-  const endDate = formatDate(row[2]);
-  const endTime = formatTime(row[3]);
-  const minVer = row[4];
-  const maxVer = row[5];
-  const typeCode = row[8];
-  const j = row[9];
+def lookup_name(id, name_map):
+    return name_map.get(str(id), f"error[{id}]")
 
-  let type = "";
-  switch (typeCode) {
-    case 0: type = "ノーマルガチャ"; break;
-    case 1: type = "通常レアガチャ"; break;
-    case 4: type = "イベントガチャ"; break;
-    default: type = "不明";
-  }
+# 名前マップの準備 (gatyaName.tsv から取得)
+name_url = "https://shibanban2.github.io/bc-event/token/gatyaName.tsv"
+name_response = requests.get(name_url)
+if name_response.status_code != 200:
+    raise Exception(f"Failed to fetch gatyaName.tsv: Status code {name_response.status_code}")
 
-  // 特例: I列=4 かつ J列=2
-  if (typeCode == 4 && j == 2) {
-    const id = row[27];
-    const normal = formatRate(row[31]);
-    const rare = formatRate(row[33]);
-    const superRare = formatRate(row[35]);
-    const ultraRare = formatRate(row[37]);
-    const legend = formatRate(row[39]);
-    const title = [row[40], row[41], row[42]].filter(Boolean).join("");
-    const extraInfo = lookupExtra(row[28]); // 付属情報
+name_tsv = StringIO(name_response.text)
+name_df = pd.read_csv(name_tsv, sep='\t', header=None)
+name_map = dict(zip(name_df[0].astype(str), name_df[1]))
 
-    const dateRange = `${startDate}${startTime ? `(${startTime})` : ""}〜${endDate}${endTime ? `(${endTime})` : ""}`;
+# ガチャスケジュールを整形
+gacha_schedule = []
+for _, row in gacha_data.iterrows():
+    start_date = format_date(row[0])
+    start_time = format_time(row[1])
+    end_date = format_date(row[2])
+    end_time = format_time(row[3])
+    type_code = int(row[8]) if pd.notna(row[8]) else 0
+    j = int(row[9]) if pd.notna(row[9]) else 0
 
-    let verText = "";
-    if (minVer && !verValues.includes(minVer)) verText += `[要Ver.${formatVer(minVer)}]`;
-    if (maxVer && maxVer != 999999) verText += `[Ver.${formatVer(maxVer)}まで]`;
+    # 特例: typeCode=4 かつ j=2
+    if type_code == 4 and j == 2:
+        id = row[27] if pd.notna(row[27]) else -1
+    else:
+        base_cols = {
+            1: 10, 2: 25, 3: 40, 4: 55, 5: 70, 6: 85, 7: 100
+        }
+        id = row[base_cols.get(j, -1)] if pd.notna(base_cols.get(j, -1)) else -1
 
-    const colA = `${dateRange} ${lookupName(id)}${extraInfo ? " " + extraInfo : ""}${verText}`;
-    const colK = `${dateRange} ${lookupName(id)}${verText}`; // lookupExtra を除いた内容
+    if id <= 0 or pd.isna(id):
+        continue
 
-    result.push([
-      colA, type, id, normal, rare, superRare, ultraRare, legend, j, title, colK
-    ]);
-    continue;
-  }
+    gacha_name = lookup_name(id, name_map)
+    date_range = f"{start_date}({get_day_of_week(row[0])}) {start_time}〜{end_date}({get_day_of_week(row[2])}) {end_time}"
+    schedule_line = f"{date_range}\n　{id} {gacha_name}"
+    gacha_schedule.append(schedule_line)
 
-  // jごとの列位置
-  const baseCols = {
-    1: { id: 10, extra: 13, normal: 14, rare: 16, super: 18, ultra: 20, confirm: 21, legend: 22, title: 24 },
-    2: { id: 25, extra: 28, normal: 29, rare: 31, super: 33, ultra: 35, confirm: 36, legend: 37, title: 39 },
-    3: { id: 40, extra: 43, normal: 44, rare: 46, super: 48, ultra: 50, confirm: 51, legend: 52, title: 54 },
-    4: { id: 55, extra: 58, normal: 59, rare: 61, super: 63, ultra: 65, confirm: 66, legend: 67, title: 69 },
-    5: { id: 70, extra: 73, normal: 74, rare: 76, super: 78, ultra: 80, confirm: 81, legend: 82, title: 84 },
-    6: { id: 85, extra: 88, normal: 89, rare: 91, super: 93, ultra: 95, confirm: 96, legend: 97, title: 99 },
-    7: { id: 100, extra: 103, normal: 104, rare: 106, super: 108, ultra: 110, confirm: 111, legend: 112, title: 114 },
-  };
-  const col = baseCols[j];
-  if (!col) continue;
+# 画像生成
+plt.figure(figsize=(10, 6))
+plt.title("ガチャスケジュール", fontsize=16, color='white')
+plt.xlabel("日付", fontsize=12, color='white')
+plt.ylabel("ガチャ名", fontsize=12, color='white')
+plt.xticks(color='white')
+plt.yticks(color='white')
+plt.gca().set_facecolor('#1a1a1a')
+plt.gcf().set_facecolor('#1a1a1a')
 
-  const id = row[col.id];
-  const titleName = lookupName(id);
-  const extraInfo = lookupExtra(row[col.extra]);
-  const normal = formatRate(row[col.normal]);
-  const rare = formatRate(row[col.rare]);
-  const superRare = formatRate(row[col.super]);
-  const ultraRare = formatRate(row[col.ultra]);
-  const confirm = (row[col.confirm] == 1 && type !== "イベントガチャ") ? "【確定】" : "";
-  const legend = formatRate(row[col.legend]);
-  const title = row[col.title] || "";
+dates = [line.split('\n')[0] for line in gacha_schedule]
+names = [line.split('\n')[1].replace('　', '').split(' ', 1)[1] for line in gacha_schedule]
 
-  let verText = "";
-  if (minVer && !verValues.includes(minVer)) verText += `[要Ver.${formatVer(minVer)}]`;
-  if (maxVer && maxVer != 999999) verText += `[Ver.${formatVer(maxVer)}まで]`;
+plt.barh(names, [1] * len(names), color=['#ff9999', '#66b3ff'], align='center')
+for i, (date, name) in enumerate(zip(dates, names)):
+    plt.text(0.5, i, date, ha='center', va='center', color='white')
 
-  const dateRange = `${startDate}${startTime ? `(${startTime})` : ""}〜${endDate}${endTime ? `(${endTime})` : ""}`;
-  const colA = `${dateRange} ${titleName}${extraInfo ? " " + extraInfo : ""}${confirm}${verText}`;
-  const colK = `${dateRange} ${titleName}${confirm}${verText}`; // lookupExtra を除く
+# 画像を表示
+plt.tight_layout()
+plt.show()
 
-  result.push([
-    colA, type, id, normal, rare, superRare, ultraRare, legend, j, title, colK
-  ]);
-}
-
-// 出力（K列は11列目）
-output.getRange(1, 1, result.length, 11).setValues(result);
-}
+# 必要に応じて保存
+# plt.savefig("gacha_schedule.png", dpi=100, bbox_inches='tight')
