@@ -136,7 +136,7 @@ if (!/ミッション/.test(text)) {
 
     if (count === 0) {
       const none = document.createElement('div');
-      none.textContent = '表示できるイベントはありません';
+      none.textContent = '';
       container.appendChild(none);
     }
   }
