@@ -117,10 +117,10 @@ async def main():
     for i, (sd, ed, stime, etime, label) in enumerate(events):
         start = datetime.strptime(sd, "%Y%m%d")
         end = datetime.strptime(ed, "%Y%m%d")
-        start_offset = stime / 2400 if stime != 0 else 0
-        end_offset = etime / 2400 if etime != 0 else 1
-        left = start + timedelta(days=start_offset)
-        width = (end - start).days + end_offset - start_offset
+        start_offset = timedelta(days=stime / 2400) if stime != 0 else timedelta(0)
+        end_offset = timedelta(days=etime / 2400) if etime != 0 else timedelta(days=1)
+        left = start + start_offset
+        width = (end + end_offset - start - start_offset).days
         draw_rounded_bar(ax, i, left, width, pastel_colors[i % len(pastel_colors)])
         ylabels.append(label)
 
