@@ -48,21 +48,24 @@ def parse_gatya_row(row, name_map, today_str):
             return []
         id = int(row[col_id]) if row[col_id].isdigit() else -1
         confirm = "【確定】" if len(row) > confirm_col and row[confirm_col] == "1" else ""
-        if id <= 0 or end_date < today_str:
+        if id <= 90 or end_date < today_str or end_date == "20300101":
             return []
-        label = f"{name_map.get(id, f'error[{id}]')} {confirm}"
-        return [(start_date, end_date, label)]
+        name = name_map.get(id, f'error[{id}]')
+        if name in ["プラチナガチャ", "レジェンドガチャ"]:
+            return []
+        label = f"{name} {confirm}"
+        return [(start_date, end_date, label, id)]
     except:
         return []
 
 # ================== メイン処理 ==================
 async def main():
     # 日本語フォント設定
-    plt.rcParams["font.family"] = "DejaVu Sans"  # 環境によっては "IPAexGothic" などに変更
+    plt.rcParams["font.family"] = "IPAexGothic"  # 環境に応じて
 
     # データ取得
     gatya_rows = await fetch_tsv("https://shibanban2.github.io/bc-event/token/gatya.tsv")
-    name_rows = await fetch_tsv("https://shibanban2.github.io/bc-event/token/gatyaName.tsv")
+    name_rows = await fetch_tsv("https://raw.githubusercontent.com/Shibanban2/bc-event/main/token/gatyaName.tsv")
     name_map = {int(r[0]): r[1] for r in name_rows if r and r[0].isdigit()}
 
     today_str = datetime.now().strftime("%Y%m%d")
@@ -83,8 +86,8 @@ async def main():
     random.shuffle(pastel_colors)
 
     # 日付範囲
-    start_dates = [datetime.strptime(sd, "%Y%m%d") for sd, _, _ in events]
-    end_dates = [datetime.strptime(ed, "%Y%m%d") for _, ed, _ in events]
+    start_dates = [datetime.strptime(sd, "%Y%m%d") for sd, _, _, _ in events]
+    end_dates = [datetime.strptime(ed, "%Y%m%d") for _, ed, _, _ in events]
     min_date = min(start_dates)
     max_date = max(end_dates)
     num_days = (max_date - min_date).days + 1
@@ -99,7 +102,7 @@ async def main():
 
     # イベントバー（縦軸は上が古い日程）
     ylabels = []
-    for i, (sd, ed, label) in enumerate(reversed(events)):
+    for i, (sd, ed, label, _) in enumerate(reversed(events)):
         start = datetime.strptime(sd, "%Y%m%d")
         end = datetime.strptime(ed, "%Y%m%d")
         color = pastel_colors[i % len(pastel_colors)]
@@ -108,10 +111,10 @@ async def main():
 
     ax.set_yticks(range(len(events)))
     ax.set_yticklabels(ylabels, fontsize=9)
-    ax.invert_yaxis()  # 上が古い日程、下が未来
+    ax.invert_yaxis()  # 上が古い日程
     ax.set_xticks(all_dates)
     ax.set_xticklabels([f"{d.day}({get_day_of_week_jp(d.strftime('%Y%m%d'))})" for d in all_dates], rotation=0)
-    ax.xaxis.set_ticks_position('top')  # 横軸を上側に
+    ax.xaxis.set_ticks_position('top')  # 横軸を上側
     ax.xaxis.set_label_position('top')
     ax.grid(True, which='both', linestyle='--', alpha=0.5)
     plt.tight_layout()
