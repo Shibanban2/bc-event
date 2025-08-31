@@ -24,7 +24,7 @@ jobs:
         run: pip install pandas matplotlib requests
 
       - name: Generate schedule image
-        run: python scripts/generate_schedule.py
+        run: python gantt-chart/generate_schedule.py
 
       - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v3
