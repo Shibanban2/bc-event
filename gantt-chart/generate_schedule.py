@@ -6,6 +6,7 @@ import asyncio
 import matplotlib.font_manager as fm
 import os
 
+
 # ================== フォント設定 ==================
 def set_japanese_font():
     # Windowsでよく使われる日本語フォント候補
