@@ -6,6 +6,14 @@ import aiohttp
 import asyncio
 import random
 import matplotlib.font_manager as fm
+import platform
+import matplotlib.pyplot as plt
+if platform.system() == "Windows":
+    plt.rcParams["font.family"] = "Yu Gothic"
+elif platform.system() == "Darwin":
+    plt.rcParams["font.family"] = "Hiragino Sans"
+else:
+    plt.rcParams["font.family"] = "IPAexGothic"
 
 # ================== 共通関数 ==================
 async def fetch_tsv(url):
