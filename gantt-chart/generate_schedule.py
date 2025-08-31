@@ -1,10 +1,12 @@
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+from matplotlib.colors import to_rgba
 from datetime import datetime, timedelta
 import aiohttp
 import asyncio
+import random
 
-# ========== Discord bot から移植した共通関数 ==========
+# ================== 共通関数 ==================
 async def fetch_tsv(url):
     try:
         async with aiohttp.ClientSession() as session:
@@ -32,13 +34,6 @@ async def fetch_tsv(url):
 def format_date(d):
     return f"{str(d)[4:6]}/{str(d)[6:8]}"
 
-def format_time(t):
-    try:
-        t = int(t)
-        return f"{str(t // 100).zfill(2)}:{str(t % 100).zfill(2)}"
-    except:
-        return "00:00"
-
 def get_day_of_week(date_str):
     try:
         date = datetime.strptime(str(date_str), "%Y%m%d")
@@ -47,14 +42,7 @@ def get_day_of_week(date_str):
     except ValueError:
         return ""
 
-def lookup_extra(code, item_map):
-    try:
-        return item_map.get(int(code), "")
-    except:
-        return ""
-
 def parse_gatya_row(row, name_map, item_map, today_str):
-    output_lines = []
     try:
         start_date = str(row[0])
         start_time = row[1]
@@ -63,45 +51,41 @@ def parse_gatya_row(row, name_map, item_map, today_str):
         type_code = int(row[8]) if len(row) > 8 and row[8].isdigit() else 0
         j = int(row[9]) if len(row) > 9 and row[9].isdigit() else 0
     except:
-        return output_lines
+        return []
 
     if end_date < today_str or end_date == "20300101":
-        return output_lines
+        return []
 
     base_cols = {
-        1: {"id": 10, "extra": 13, "confirm": 21, "title": 24},
-        2: {"id": 25, "extra": 28, "confirm": 36, "title": 39},
-        3: {"id": 40, "extra": 43, "confirm": 51, "title": 54},
-        4: {"id": 55, "extra": 58, "confirm": 66, "title": 69},
-        5: {"id": 70, "extra": 73, "confirm": 81, "title": 84},
-        6: {"id": 85, "extra": 88, "confirm": 96, "title": 99},
-        7: {"id": 100, "extra": 103, "confirm": 111, "title": 114},
+        1: {"id": 10, "confirm": 21, "title": 24},
+        2: {"id": 25, "confirm": 36, "title": 39},
+        3: {"id": 40, "confirm": 51, "title": 54},
+        4: {"id": 55, "confirm": 66, "title": 69},
+        5: {"id": 70, "confirm": 81, "title": 84},
+        6: {"id": 85, "confirm": 96, "title": 99},
+        7: {"id": 100, "confirm": 111, "title": 114},
     }
 
     col = base_cols.get(j)
     if not col:
-        return output_lines
+        return []
 
     try:
         id = int(row[col["id"]]) if len(row) > col["id"] and row[col["id"]].isdigit() else -1
-        extra = lookup_extra(row[col["extra"]], item_map) if len(row) > col["extra"] else ""
         confirm = "【確定】" if len(row) > col["confirm"] and row[col["confirm"]] == "1" and type_code != 4 else ""
     except:
-        return output_lines
+        return []
 
     if id <= 0:
-        return output_lines
+        return []
 
     gname = name_map.get(id, f"error[{id}]")
-    date_range = f"{format_date(start_date)}({get_day_of_week(start_date)}) {format_time(start_time)}〜{format_date(end_date)}({get_day_of_week(end_date)}) {format_time(end_time)}"
-    col_k = f"{date_range}\n{id} {gname}{confirm}"
-    if extra:
-        col_k += f" {extra}"
-    output_lines.append((start_date, end_date, col_k))
-    return output_lines
+    label = f"{gname} {confirm}"
+    return [(start_date, end_date, label)]
 
-# ========== メイン処理 ==========
+# ================== メイン処理 ==================
 async def main():
+    # データ取得
     gatya_rows = await fetch_tsv("https://shibanban2.github.io/bc-event/token/gatya.tsv")
     name_rows = await fetch_tsv("https://shibanban2.github.io/bc-event/token/gatyaName.tsv")
     item_rows = await fetch_tsv("https://shibanban2.github.io/bc-event/token/gatyaitem.tsv")
@@ -118,20 +102,46 @@ async def main():
         print("No events found")
         return
 
-    # matplotlib で簡単なガントチャート風に描画
-    fig, ax = plt.subplots(figsize=(10, len(events) * 0.4))
+    # パステルカラー生成
+    pastel_colors = [
+        "#AEC6CF", "#FFB347", "#B39EB5", "#77DD77",
+        "#FFD1DC", "#CBAACB", "#FF6961", "#FDFD96",
+        "#CB99C9", "#F0E68C"
+    ]
+    random.shuffle(pastel_colors)
+
+    # 日付範囲決定
+    start_dates = [datetime.strptime(sd, "%Y%m%d") for sd, _, _ in events]
+    end_dates = [datetime.strptime(ed, "%Y%m%d") for _, ed, _ in events]
+    min_date = min(start_dates)
+    max_date = max(end_dates)
+
+    fig, ax = plt.subplots(figsize=(12, len(events)*0.5))
+
+    # 土日の背景
+    curr = min_date
+    while curr <= max_date:
+        if curr.weekday() >= 5:  # 土日
+            ax.axvspan(curr, curr + timedelta(days=1), color=to_rgba('pink', 0.2))
+        curr += timedelta(days=1)
+
     ylabels = []
     for i, (sd, ed, label) in enumerate(events):
         start = datetime.strptime(sd, "%Y%m%d")
         end = datetime.strptime(ed, "%Y%m%d")
-        ax.barh(i, (end - start).days + 1, left=start, color="skyblue")
+        color = pastel_colors[i % len(pastel_colors)]
+        ax.barh(i, (end - start).days + 1, left=start, color=color, edgecolor='black')
         ylabels.append(label)
+
     ax.set_yticks(range(len(events)))
-    ax.set_yticklabels(ylabels, fontsize=8)
-    ax.xaxis.set_major_formatter(mdates.DateFormatter("%m/%d"))
-    fig.autofmt_xdate()
+    ax.set_yticklabels(ylabels, fontsize=9)
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%d(%a)"))  # 29(金) 形式
+    ax.set_xlim(min_date - timedelta(days=1), max_date + timedelta(days=1))
+    ax.grid(True, axis='x', linestyle='--', alpha=0.5)
+    fig.autofmt_xdate(rotation=0)
     plt.tight_layout()
-    plt.savefig("schedule.png")
+    plt.savefig("schedule.png", dpi=150)
+    print("schedule.png generated!")
 
 if __name__ == "__main__":
     asyncio.run(main())
