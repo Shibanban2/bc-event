@@ -4,7 +4,7 @@ on:
   push:
     branches: ["main"]
   schedule:
-    - cron: "0 */6 * * *" # 6時間ごとに実行（任意で変更可）
+    - cron: "0 */6 * * *"
   workflow_dispatch:
 
 jobs:
@@ -21,7 +21,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install pandas matplotlib requests
+        run: pip install pandas matplotlib requests aiohttp
 
       - name: Generate schedule image
         run: python gantt-chart/generate_schedule.py
@@ -33,3 +33,4 @@ jobs:
           publish_branch: gh-pages
           publish_dir: .
           force_orphan: true
+
