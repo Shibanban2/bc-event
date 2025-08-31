@@ -4,18 +4,20 @@ from matplotlib.colors import to_rgba
 from datetime import datetime, timedelta
 import aiohttp
 import asyncio
-import matplotlib.font_manager as fm
 import random
+import matplotlib.font_manager as fm
+import os
 
 # ================== 日本語フォント設定 ==================
-# GitHub Actions など Linux 環境でも自動で IPAexGothic を使用
-jp_fonts = [f for f in fm.findSystemFonts() if "ipaexg" in f.lower()]
-if jp_fonts:
-    jp_font_path = jp_fonts[0]
-    jp_font = fm.FontProperties(fname=jp_font_path)
-    plt.rcParams["font.family"] = jp_font.get_name()
-else:
-    print("IPAexGothic font not found. 日本語が表示されません")
+def set_japanese_font():
+    candidates = ["Yu Gothic", "Meiryo", "MS Gothic", "Noto Sans CJK JP"]
+    available_fonts = set(f.name for f in fm.fontManager.ttflist)
+    for font in candidates:
+        if font in available_fonts:
+            plt.rcParams["font.family"] = font
+            print(f"使用フォント: {font}")
+            return
+    print("日本語フォントが見つかりません。文字化けの可能性があります。")
 
 # ================== 共通関数 ==================
 async def fetch_tsv(url):
@@ -68,7 +70,8 @@ def parse_gatya_row(row, name_map, today_str):
 
 # ================== メイン処理 ==================
 async def main():
-    # データ取得
+    set_japanese_font()
+
     gatya_rows = await fetch_tsv("https://shibanban2.github.io/bc-event/token/gatya.tsv")
     name_rows = await fetch_tsv("https://shibanban2.github.io/bc-event/token/gatyaName.tsv")
     name_map = {int(r[0]): r[1] for r in name_rows if r and r[0].isdigit()}
@@ -82,14 +85,12 @@ async def main():
         print("No events found")
         return
 
-    # 優しいパステルカラー
     pastel_colors = [
         "#BFD8B8", "#FFE0A3", "#C4B7E5", "#A8E6CF",
         "#FFCBC1", "#E0BBE4", "#FFF5BA", "#D5ECC2",
         "#FFDAC1", "#E0F7FA"
     ]
 
-    # 日付範囲
     start_dates = [datetime.strptime(sd, "%Y%m%d") for sd, _, _, _, _ in events]
     end_dates = [datetime.strptime(ed, "%Y%m%d") for _, ed, _, _, _ in events]
     min_date = min(start_dates)
@@ -99,36 +100,31 @@ async def main():
 
     fig, ax = plt.subplots(figsize=(num_days*0.5 + 5, len(events)*0.5))
 
-    # 土日の背景
     for d in all_dates:
         if d.weekday() >= 5:
             ax.axvspan(d, d + timedelta(days=1), color=to_rgba("pink", 0.2))
 
-    # イベントバー
     ylabels = []
     for i, (sd, ed, stime, etime, label) in enumerate(events):
         start = datetime.strptime(sd, "%Y%m%d")
         end = datetime.strptime(ed, "%Y%m%d")
-        # 時刻対応（0:00 → 全日、11:00などは半マスで開始/終了）
         start_offset = stime / 2400 if stime != 0 else 0
         end_offset = etime / 2400 if etime != 0 else 1
-        ax.barh(i, (end - start).days + end_offset - start_offset, left=start + timedelta(days=start_offset),
+        ax.barh(i, (end - start).days + end_offset - start_offset, left=start + timedelta(days=start_offset), 
                 color=pastel_colors[i % len(pastel_colors)], edgecolor='black')
         ylabels.append(label)
 
-    # 軸ラベル
     ax.set_yticks(range(len(events)))
     ax.set_yticklabels(ylabels, fontsize=9)
     ax.set_xticks(all_dates)
     ax.set_xticklabels([f"{d.day}({get_day_of_week_jp(d.strftime('%Y%m%d'))})" for d in all_dates], rotation=0)
     ax.xaxis.set_ticks_position('top')
     ax.xaxis.set_label_position('top')
-    ax.invert_yaxis()  # 上が古い日程
+    ax.invert_yaxis()
     ax.grid(True, which='both', linestyle='--', alpha=0.5)
-
     plt.tight_layout()
     plt.savefig("schedule.png", dpi=150)
-    print("schedule.png generated!")
+    print("✅ schedule.png generated!")
 
 if __name__ == "__main__":
     asyncio.run(main())
