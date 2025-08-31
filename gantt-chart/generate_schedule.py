@@ -1,25 +1,33 @@
 import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
 from matplotlib.colors import to_rgba
 from datetime import datetime, timedelta
 import aiohttp
 import asyncio
-import random
 import matplotlib.font_manager as fm
 import os
 
-# ================== 日本語フォント設定 ==================
+# ================== フォント設定 ==================
 def set_japanese_font():
-    candidates = ["Yu Gothic", "Meiryo", "MS Gothic", "Noto Sans CJK JP"]
+    # Windowsでよく使われる日本語フォント候補
+    candidates = ["Yu Gothic", "Meiryo", "MS Gothic", "MS Mincho"]
     available_fonts = set(f.name for f in fm.fontManager.ttflist)
+
     for font in candidates:
         if font in available_fonts:
             plt.rcParams["font.family"] = font
-            print(f"使用フォント: {font}")
+            print(f"✅ 使用フォント: {font}")
             return
-    print("日本語フォントが見つかりません。文字化けの可能性があります。")
 
-# ================== 共通関数 ==================
+    # フォントファイルから直接指定（最終手段）
+    fallback_path = "C:/Windows/Fonts/YuGothM.ttc"
+    if os.path.exists(fallback_path):
+        font_prop = fm.FontProperties(fname=fallback_path)
+        plt.rcParams["font.family"] = font_prop.get_name()
+        print(f"✅ フォントファイル指定: {font_prop.get_name()}")
+    else:
+        print("⚠️ 日本語フォントが見つかりません。文字化けの可能性があります。")
+
+# ================== TSV取得 ==================
 async def fetch_tsv(url):
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as resp:
@@ -40,11 +48,13 @@ async def fetch_tsv(url):
                 rows.append(row)
             return rows
 
+# ================== 曜日取得 ==================
 def get_day_of_week_jp(date_str):
     date = datetime.strptime(date_str, "%Y%m%d")
     days = ["月", "火", "水", "木", "金", "土", "日"]
     return days[date.weekday()]
 
+# ================== ガチャ行パース ==================
 def parse_gatya_row(row, name_map, today_str):
     try:
         start_date = str(row[0])
