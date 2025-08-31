@@ -4,20 +4,18 @@ from matplotlib.colors import to_rgba
 from datetime import datetime, timedelta
 import aiohttp
 import asyncio
-import platform
 import matplotlib.font_manager as fm
+import random
 
-# ================== フォント設定 ==================
-system = platform.system()
-if system == "Windows":
-    plt.rcParams["font.family"] = "Yu Gothic"
-elif system == "Darwin":
-    plt.rcParams["font.family"] = "Hiragino Sans"
-else:
-    # Linux / GitHub Actions では IPAexGothic を使用
-    font_path = "/usr/share/fonts/truetype/ipafont/ipaexg.ttf"
-    jp_font = fm.FontProperties(fname=font_path)
+# ================== 日本語フォント設定 ==================
+# GitHub Actions など Linux 環境でも自動で IPAexGothic を使用
+jp_fonts = [f for f in fm.findSystemFonts() if "ipaexg" in f.lower()]
+if jp_fonts:
+    jp_font_path = jp_fonts[0]
+    jp_font = fm.FontProperties(fname=jp_font_path)
     plt.rcParams["font.family"] = jp_font.get_name()
+else:
+    print("IPAexGothic font not found. 日本語が表示されません")
 
 # ================== 共通関数 ==================
 async def fetch_tsv(url):
@@ -45,12 +43,6 @@ def get_day_of_week_jp(date_str):
     days = ["月", "火", "水", "木", "金", "土", "日"]
     return days[date.weekday()]
 
-def time_to_fraction(t):
-    # HHMM → 1日単位の割合
-    h = t // 100
-    m = t % 100
-    return (h + m/60)/24
-
 def parse_gatya_row(row, name_map, today_str):
     try:
         start_date = str(row[0])
@@ -64,7 +56,6 @@ def parse_gatya_row(row, name_map, today_str):
             return []
         id = int(row[col_id]) if row[col_id].isdigit() else -1
         confirm = "【確定】" if len(row) > confirm_col and row[confirm_col] == "1" else ""
-        # 条件フィルタ
         if id <= 90 or end_date == "20300101" or start_date < today_str:
             return []
         name = name_map.get(id, f'error[{id}]')
@@ -118,17 +109,14 @@ async def main():
     for i, (sd, ed, stime, etime, label) in enumerate(events):
         start = datetime.strptime(sd, "%Y%m%d")
         end = datetime.strptime(ed, "%Y%m%d")
-        start_offset = time_to_fraction(stime) if stime != 0 else 0
-        end_offset = time_to_fraction(etime) if etime != 0 else 1
-        ax.barh(
-            i, 
-            (end - start).days + end_offset - start_offset, 
-            left=start + timedelta(days=start_offset), 
-            color=pastel_colors[i % len(pastel_colors)], 
-            edgecolor='black'
-        )
+        # 時刻対応（0:00 → 全日、11:00などは半マスで開始/終了）
+        start_offset = stime / 2400 if stime != 0 else 0
+        end_offset = etime / 2400 if etime != 0 else 1
+        ax.barh(i, (end - start).days + end_offset - start_offset, left=start + timedelta(days=start_offset),
+                color=pastel_colors[i % len(pastel_colors)], edgecolor='black')
         ylabels.append(label)
 
+    # 軸ラベル
     ax.set_yticks(range(len(events)))
     ax.set_yticklabels(ylabels, fontsize=9)
     ax.set_xticks(all_dates)
@@ -137,10 +125,10 @@ async def main():
     ax.xaxis.set_label_position('top')
     ax.invert_yaxis()  # 上が古い日程
     ax.grid(True, which='both', linestyle='--', alpha=0.5)
+
     plt.tight_layout()
     plt.savefig("schedule.png", dpi=150)
     print("schedule.png generated!")
 
 if __name__ == "__main__":
     asyncio.run(main())
-
