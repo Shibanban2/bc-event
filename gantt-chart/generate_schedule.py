@@ -22,7 +22,10 @@ for line in resp.text.splitlines():
             pass
 
 # TSV読み込み
-df = pd.read_csv(GATYA_TSV, sep="\t", header=None)
+resp = requests.get(GATYA_TSV)
+resp.encoding = "utf-8"  # 念のため
+data = io.StringIO(resp.text)
+df = pd.read_csv(data, sep="\t", header=None, engine="python")
 
 # 必要な列だけ使う (開始日, 終了日, ガチャID)
 df = df[[0, 2, 4]]
