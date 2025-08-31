@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import aiohttp
 import asyncio
 import platform
+import matplotlib.font_manager as fm
 
 # ================== フォント設定 ==================
 system = platform.system()
@@ -13,8 +14,10 @@ if system == "Windows":
 elif system == "Darwin":
     plt.rcParams["font.family"] = "Hiragino Sans"
 else:
-    # Linux: GitHub Actionsの場合はIPAexGothicが必要
-    plt.rcParams["font.family"] = "IPAexGothic"
+    # Linux / GitHub Actions では IPAexGothic を使用
+    font_path = "/usr/share/fonts/truetype/fonts-ipafont-gothic/ipaexg.ttf"
+    jp_font = fm.FontProperties(fname=font_path)
+    plt.rcParams["font.family"] = jp_font.get_name()
 
 # ================== 共通関数 ==================
 async def fetch_tsv(url):
@@ -61,6 +64,7 @@ def parse_gatya_row(row, name_map, today_str):
             return []
         id = int(row[col_id]) if row[col_id].isdigit() else -1
         confirm = "【確定】" if len(row) > confirm_col and row[confirm_col] == "1" else ""
+        # 条件フィルタ
         if id <= 90 or end_date == "20300101" or start_date < today_str:
             return []
         name = name_map.get(id, f'error[{id}]')
