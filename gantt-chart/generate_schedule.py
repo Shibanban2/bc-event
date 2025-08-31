@@ -4,15 +4,16 @@ from matplotlib.colors import to_rgba
 from datetime import datetime, timedelta
 import aiohttp
 import asyncio
-import random
-import matplotlib.font_manager as fm
 import platform
-import matplotlib.pyplot as plt
-if platform.system() == "Windows":
+
+# ================== フォント設定 ==================
+system = platform.system()
+if system == "Windows":
     plt.rcParams["font.family"] = "Yu Gothic"
-elif platform.system() == "Darwin":
+elif system == "Darwin":
     plt.rcParams["font.family"] = "Hiragino Sans"
 else:
+    # Linux: GitHub Actionsの場合はIPAexGothicが必要
     plt.rcParams["font.family"] = "IPAexGothic"
 
 # ================== 共通関数 ==================
@@ -41,6 +42,12 @@ def get_day_of_week_jp(date_str):
     days = ["月", "火", "水", "木", "金", "土", "日"]
     return days[date.weekday()]
 
+def time_to_fraction(t):
+    # HHMM → 1日単位の割合
+    h = t // 100
+    m = t % 100
+    return (h + m/60)/24
+
 def parse_gatya_row(row, name_map, today_str):
     try:
         start_date = str(row[0])
@@ -66,10 +73,6 @@ def parse_gatya_row(row, name_map, today_str):
 
 # ================== メイン処理 ==================
 async def main():
-    # 日本語フォント設定（環境に応じて変更してください）
-    # Windows: "Yu Gothic", macOS: "Hiragino Sans", Linux: "IPAexGothic"
-    plt.rcParams["font.family"] = "Yu Gothic"
-
     # データ取得
     gatya_rows = await fetch_tsv("https://shibanban2.github.io/bc-event/token/gatya.tsv")
     name_rows = await fetch_tsv("https://shibanban2.github.io/bc-event/token/gatyaName.tsv")
@@ -111,11 +114,15 @@ async def main():
     for i, (sd, ed, stime, etime, label) in enumerate(events):
         start = datetime.strptime(sd, "%Y%m%d")
         end = datetime.strptime(ed, "%Y%m%d")
-        # 時刻対応
-        start_offset = stime / 2400 if stime != 0 else 0
-        end_offset = etime / 2400 if etime != 0 else 1
-        ax.barh(i, (end - start).days + end_offset - start_offset, left=start + timedelta(days=start_offset), 
-                color=pastel_colors[i % len(pastel_colors)], edgecolor='black')
+        start_offset = time_to_fraction(stime) if stime != 0 else 0
+        end_offset = time_to_fraction(etime) if etime != 0 else 1
+        ax.barh(
+            i, 
+            (end - start).days + end_offset - start_offset, 
+            left=start + timedelta(days=start_offset), 
+            color=pastel_colors[i % len(pastel_colors)], 
+            edgecolor='black'
+        )
         ylabels.append(label)
 
     ax.set_yticks(range(len(events)))
@@ -132,3 +139,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
