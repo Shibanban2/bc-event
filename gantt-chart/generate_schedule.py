@@ -15,7 +15,7 @@ elif system == "Darwin":
     plt.rcParams["font.family"] = "Hiragino Sans"
 else:
     # Linux / GitHub Actions では IPAexGothic を使用
-    font_path = "/usr/share/fonts/truetype/fonts-ipafont-gothic/ipaexg.ttf"
+    font_path = "/usr/share/fonts/truetype/ipafont/ipaexg.ttf"
     jp_font = fm.FontProperties(fname=font_path)
     plt.rcParams["font.family"] = jp_font.get_name()
 
