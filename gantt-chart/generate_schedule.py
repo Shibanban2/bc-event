@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 from matplotlib.colors import to_rgba
+from matplotlib.patches import FancyBboxPatch
 from datetime import datetime, timedelta
 import aiohttp
 import asyncio
@@ -31,11 +32,13 @@ async def fetch_tsv(url):
                 rows.append(row)
             return rows
 
+# ================== 曜日取得 ==================
 def get_day_of_week_jp(date_str):
     date = datetime.strptime(date_str, "%Y%m%d")
     days = ["月", "火", "水", "木", "金", "土", "日"]
     return days[date.weekday()]
 
+# ================== ガチャ行パース ==================
 def parse_gatya_row(row, name_map, today_str):
     try:
         start_date = str(row[0])
@@ -58,6 +61,17 @@ def parse_gatya_row(row, name_map, today_str):
         return [(start_date, end_date, start_time, end_time, label)]
     except:
         return []
+
+# ================== 角丸バー描画 ==================
+def draw_rounded_bar(ax, y, start, width, color):
+    rect = FancyBboxPatch(
+        (start, y - 0.4), width, 0.8,
+        boxstyle="round,pad=0.02",
+        linewidth=1,
+        edgecolor='black',
+        facecolor=color
+    )
+    ax.add_patch(rect)
 
 # ================== メイン処理 ==================
 async def main():
@@ -89,7 +103,11 @@ async def main():
     num_days = (max_date - min_date).days + 1
     all_dates = [min_date + timedelta(days=i) for i in range(num_days)]
 
-    fig, ax = plt.subplots(figsize=(num_days*0.5 + 5, len(events)*0.5))
+    # 固定サイズ（700×400px）
+    dpi = 100
+    fig_width = 700 / dpi
+    fig_height = 400 / dpi
+    fig, ax = plt.subplots(figsize=(fig_width, fig_height), dpi=dpi)
 
     for d in all_dates:
         if d.weekday() >= 5:
@@ -101,8 +119,9 @@ async def main():
         end = datetime.strptime(ed, "%Y%m%d")
         start_offset = stime / 2400 if stime != 0 else 0
         end_offset = etime / 2400 if etime != 0 else 1
-        ax.barh(i, (end - start).days + end_offset - start_offset, left=start + timedelta(days=start_offset), 
-                color=pastel_colors[i % len(pastel_colors)], edgecolor='black')
+        left = start + timedelta(days=start_offset)
+        width = (end - start).days + end_offset - start_offset
+        draw_rounded_bar(ax, i, left, width, pastel_colors[i % len(pastel_colors)])
         ylabels.append(label)
 
     ax.set_yticks(range(len(events)))
@@ -114,7 +133,7 @@ async def main():
     ax.invert_yaxis()
     ax.grid(True, which='both', linestyle='--', alpha=0.5)
     plt.tight_layout()
-    plt.savefig("schedule.png", dpi=150)
+    plt.savefig("schedule.png", dpi=dpi)
     print("✅ schedule.png generated!")
 
 if __name__ == "__main__":
