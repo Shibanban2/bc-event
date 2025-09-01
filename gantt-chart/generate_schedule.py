@@ -55,7 +55,7 @@ def parse_gatya_row(row, name_map, today_str):
         confirm = "【確定】" if len(row) > confirm_col and row[confirm_col] == "1" else ""
         if id <= 90 or end_date == "20300101" or start_date < today_str:
             return []
-        name = name_map.get(id, f'error[{id}]')
+        name = name_map.get(str(id), f'error[{id}]')  # ← str(id) に修正
         if name in ["プラチナガチャ", "レジェンドガチャ"]:
             return []
         label = f"{name} {confirm}"
@@ -80,8 +80,8 @@ async def main():
     set_japanese_font()
 
     gatya_rows = await fetch_tsv("https://shibanban2.github.io/bc-event/token/gatya.tsv")
-    name_rows = await fetch_tsv("https://shibanban2.github.io/bc-event/name.tsv")
-    name_map = {int(r[0]): r[1] for r in name_rows if r and r[0].isdigit()}
+    name_rows = await fetch_tsv("https://shibanban2.github.io/bc-event/name.tsv")  # ← URL変更
+    name_map = {r[0]: r[1] for r in name_rows if len(r) >= 2}  # ← strキーで構築
 
     today_str = datetime.now().strftime("%Y%m%d")
     events = []
