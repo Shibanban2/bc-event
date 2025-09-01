@@ -113,26 +113,25 @@ async def main():
     fig, ax = plt.subplots(figsize=(fig_width, fig_height), dpi=dpi)
 
     tick_positions = [date2num(d) for d in all_dates]
-    ax.set_xticks(tick_positions)
 
-    # 土日背景を日付基準で塗る
-    half_width = (tick_positions[1] - tick_positions[0]) / 2 if len(tick_positions) > 1 else 0.5
-    for i, d in enumerate(all_dates):
+    # ---- 土日背景を日単位で塗る ----
+    for d in all_dates:
         if d.weekday() in [5, 6]:  # 土曜・日曜
-            x = tick_positions[i]
-            ax.axvspan(x - half_width, x + half_width, color=to_rgba("pink", 0.2), zorder=0)
+            start = date2num(d)
+            end = date2num(d + timedelta(days=1))
+            ax.axvspan(start, end, color=to_rgba("pink", 0.2), zorder=0)
 
-    # 日付ラベルの角度決定（表示日数が長い場合のみ斜め）
+    # ---- 日付ラベル ----
     rotation_angle = 45 if num_days >= 14 else 0
+    ax.set_xticks(tick_positions)
+    ax.set_xticklabels(
+        [f"{d.day}({get_day_of_week_jp(d.strftime('%Y%m%d'))})" for d in all_dates],
+        rotation=rotation_angle, ha="center", fontsize=9
+    )
+    ax.xaxis.set_ticks_position("top")
+    ax.xaxis.set_label_position("top")
 
-    # 日付ラベルを「マスの真上」に配置
-    for i, d in enumerate(all_dates):
-        label = f"{d.day}({get_day_of_week_jp(d.strftime('%Y%m%d'))})"
-        x = tick_positions[i]
-        ax.text(x, len(events) + 0.5, label, ha='center', va='bottom',
-                fontsize=9, rotation=rotation_angle)
-
-    # イベント棒描画
+    # ---- イベント棒描画 ----
     ylabels = []
     for i, (sd, ed, stime, etime, label) in enumerate(events):
         start = datetime.strptime(sd, "%Y%m%d")
@@ -144,11 +143,10 @@ async def main():
         draw_rounded_bar(ax, i, left, duration, pastel_colors[i % len(pastel_colors)])
         ylabels.append(label)
 
-    # 軸設定
+    # ---- 軸設定 ----
     ax.set_yticks(range(len(events)))
     ax.set_yticklabels(ylabels, fontsize=9)
-    ax.set_xticklabels([])  # デフォルトのラベルは消す
-    ax.tick_params(axis='x', labelsize=0)
+    ax.tick_params(axis='x', labelsize=9)
     ax.invert_yaxis()
     ax.grid(True, which='both', linestyle='--', alpha=0.5)
 
