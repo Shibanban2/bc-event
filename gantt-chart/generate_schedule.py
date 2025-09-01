@@ -120,8 +120,8 @@ async def main():
         start_offset = timedelta(days=stime / 2400) if stime != 0 else timedelta(0)
         end_offset = timedelta(days=etime / 2400) if etime != 0 else timedelta(days=1)
         left = start + start_offset
-        width = (end + end_offset - start - start_offset).days
-        draw_rounded_bar(ax, i, left, width, pastel_colors[i % len(pastel_colors)])
+        duration = (end + end_offset - start - start_offset).total_seconds() / 86400
+        draw_rounded_bar(ax, i, left, duration, pastel_colors[i % len(pastel_colors)])
         ylabels.append(label)
 
     ax.set_yticks(range(len(events)))
