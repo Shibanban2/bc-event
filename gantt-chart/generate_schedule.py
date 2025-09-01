@@ -112,12 +112,20 @@ async def main():
     fig_height = 400 / dpi
     fig, ax = plt.subplots(figsize=(fig_width, fig_height), dpi=dpi)
 
-    # 土日背景（左に1日ずらして補正）
-    for d in all_dates:
-        if d.weekday() in [5, 6]:  # 土曜・日曜のみ
-            start = date2num(d) - 1
-            end = start + 1
-            ax.axvspan(start, end, color=to_rgba("pink", 0.2))
+    # ラベル位置と塗り位置を揃える
+    tick_positions = [date2num(d) for d in all_dates]
+    ax.set_xticks(tick_positions)
+
+    # 土日背景（ラベル中心に合わせて塗る）
+    if len(tick_positions) > 1:
+        half_width = (tick_positions[1] - tick_positions[0]) / 2
+    else:
+        half_width = 0.5
+
+    for i, d in enumerate(all_dates):
+        if d.weekday() in [5, 6]:  # 土日
+            center = tick_positions[i]
+            ax.axvspan(center - half_width, center + half_width, color=to_rgba("pink", 0.2))
 
     ylabels = []
     for i, (sd, ed, stime, etime, label) in enumerate(events):
@@ -132,7 +140,6 @@ async def main():
 
     ax.set_yticks(range(len(events)))
     ax.set_yticklabels(ylabels, fontsize=9)
-    ax.set_xticks([date2num(d) for d in all_dates])
     ax.set_xticklabels([f"{d.day}({get_day_of_week_jp(d.strftime('%Y%m%d'))})" for d in all_dates],
                        rotation=45, ha='right')
     ax.tick_params(axis='x', labelsize=8)
@@ -148,4 +155,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-
