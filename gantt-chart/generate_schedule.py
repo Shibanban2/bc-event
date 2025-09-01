@@ -5,7 +5,6 @@ from matplotlib.dates import date2num
 from datetime import datetime, timedelta
 import aiohttp
 import asyncio
-import requests
 import matplotlib.font_manager as fm
 
 # ================== フォント設定 ==================
@@ -39,16 +38,6 @@ def get_day_of_week_jp(date_str):
     date = datetime.strptime(date_str, "%Y%m%d")
     days = ["月", "火", "水", "木", "金", "土", "日"]
     return days[date.weekday()]
-
-# ================== 祝日判定 ==================
-def is_japanese_holiday(date_obj):
-    date_str = date_obj.strftime("%Y-%m-%d")
-    url = f"https://holidays-jp.github.io/api/v1/{date_str}.json"
-    try:
-        resp = requests.get(url)
-        return resp.status_code == 200 and resp.json() != []
-    except:
-        return False
 
 # ================== ガチャ行パース ==================
 def parse_gatya_row(row, name_map, today_str):
@@ -127,10 +116,10 @@ async def main():
     tick_positions = [date2num(d) for d in all_dates]
     ax.set_xticks(tick_positions)
 
-    # 土日＋祝日背景（ラベル中心に合わせて塗る）
+    # 土日背景（ラベル中心に合わせて塗る）
     half_width = (tick_positions[1] - tick_positions[0]) / 2 if len(tick_positions) > 1 else 0.5
     for i, d in enumerate(all_dates):
-        if d.weekday() in [5, 6] or is_japanese_holiday(d):
+        if d.weekday() in [5, 6]:  # 土曜・日曜のみ
             center = tick_positions[i]
             ax.axvspan(center - half_width, center + half_width, color=to_rgba("pink", 0.2))
 
@@ -162,4 +151,8 @@ async def main():
     ax.invert_yaxis()
     ax.grid(True, which='both', linestyle='--', alpha=0.5)
     plt.tight_layout()
-   
+    plt.savefig("schedule.png", dpi=dpi)
+    print("✅ schedule.png generated!")
+
+if __name__ == "__main__":
+    asyncio.run(main())
