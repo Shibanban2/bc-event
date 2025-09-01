@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 from matplotlib.colors import to_rgba
 from matplotlib.patches import FancyBboxPatch
+from matplotlib.dates import date2num
 from datetime import datetime, timedelta
 import aiohttp
 import asyncio
@@ -63,9 +64,10 @@ def parse_gatya_row(row, name_map, today_str):
         return []
 
 # ================== 角丸バー描画 ==================
-def draw_rounded_bar(ax, y, start, width, color):
+def draw_rounded_bar(ax, y, start_dt, width_days, color):
+    start_num = date2num(start_dt)
     rect = FancyBboxPatch(
-        (start, y - 0.4), width, 0.8,
+        (start_num, y - 0.4), width_days, 0.8,
         boxstyle="round,pad=0.02",
         linewidth=1,
         edgecolor='black',
@@ -111,7 +113,7 @@ async def main():
 
     for d in all_dates:
         if d.weekday() >= 5:
-            ax.axvspan(d, d + timedelta(days=1), color=to_rgba("pink", 0.2))
+            ax.axvspan(date2num(d), date2num(d + timedelta(days=1)), color=to_rgba("pink", 0.2))
 
     ylabels = []
     for i, (sd, ed, stime, etime, label) in enumerate(events):
@@ -126,7 +128,7 @@ async def main():
 
     ax.set_yticks(range(len(events)))
     ax.set_yticklabels(ylabels, fontsize=9)
-    ax.set_xticks(all_dates)
+    ax.set_xticks([date2num(d) for d in all_dates])
     ax.set_xticklabels([f"{d.day}({get_day_of_week_jp(d.strftime('%Y%m%d'))})" for d in all_dates], rotation=0)
     ax.xaxis.set_ticks_position('top')
     ax.xaxis.set_label_position('top')
