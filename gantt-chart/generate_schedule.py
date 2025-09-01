@@ -55,7 +55,7 @@ def parse_gatya_row(row, name_map, today_str):
         confirm = "【確定】" if len(row) > confirm_col and row[confirm_col] == "1" else ""
         if id <= 90 or end_date == "20300101" or start_date < today_str:
             return []
-        name = name_map.get(str(id), f'error[{id}]')  # ← str(id) に修正
+        name = name_map.get(str(id), f'error[{id}]')
         if name in ["プラチナガチャ", "レジェンドガチャ"]:
             return []
         label = f"{name} {confirm}"
@@ -80,8 +80,8 @@ async def main():
     set_japanese_font()
 
     gatya_rows = await fetch_tsv("https://shibanban2.github.io/bc-event/token/gatya.tsv")
-    name_rows = await fetch_tsv("https://shibanban2.github.io/bc-event/name.tsv")  # ← URL変更
-    name_map = {r[0]: r[1] for r in name_rows if len(r) >= 2}  # ← strキーで構築
+    name_rows = await fetch_tsv("https://shibanban2.github.io/bc-event/name.tsv")  # ← URL変更済み
+    name_map = {r[0]: r[1] for r in name_rows if len(r) >= 2}
 
     today_str = datetime.now().strftime("%Y%m%d")
     events = []
@@ -112,9 +112,9 @@ async def main():
     fig_height = 400 / dpi
     fig, ax = plt.subplots(figsize=(fig_width, fig_height), dpi=dpi)
 
-    # 土日背景（正確な判定）
+    # 土日背景（明示的に修正）
     for d in all_dates:
-        if d.weekday() in [5, 6]:  # 土:5, 日:6
+        if d.weekday() in [5, 6]:  # 土曜・日曜のみ
             ax.axvspan(date2num(d), date2num(d + timedelta(days=1)), color=to_rgba("pink", 0.2))
 
     ylabels = []
@@ -128,13 +128,8 @@ async def main():
         draw_rounded_bar(ax, i, left, duration, pastel_colors[i % len(pastel_colors)])
         ylabels.append(label)
 
-    # ラベル描画（【確定】は赤）
-    for i, label in enumerate(ylabels):
-        color = 'red' if '【確定】' in label else 'black'
-        ax.text(-0.5, i, label, va='center', ha='left', fontsize=9, color=color)
-
     ax.set_yticks(range(len(events)))
-    ax.set_yticklabels([''] * len(events))  # 空にして text() で描画
+    ax.set_yticklabels(ylabels, fontsize=9)
     ax.set_xticks([date2num(d) for d in all_dates])
     ax.set_xticklabels([f"{d.day}({get_day_of_week_jp(d.strftime('%Y%m%d'))})" for d in all_dates],
                        rotation=45, ha='right')
