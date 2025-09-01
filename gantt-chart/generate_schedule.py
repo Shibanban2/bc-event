@@ -117,17 +117,15 @@ async def main():
     ax.set_xticks(tick_positions)
 
     # 土日背景（ラベル中心に合わせて塗る）
-    half_width = (tick_positions[1] - tick_positions[0]) / 2 if len(tick_positions) > 1 else 0.5
+    if len(tick_positions) > 1:
+        half_width = (tick_positions[1] - tick_positions[0]) / 2
+    else:
+        half_width = 0.5
+
     for i, d in enumerate(all_dates):
-        if d.weekday() in [5, 6]:  # 土曜・日曜のみ
+        if d.weekday() in [5, 6]:  # 土日
             center = tick_positions[i]
             ax.axvspan(center - half_width, center + half_width, color=to_rgba("pink", 0.2))
-
-    # 日付ラベルを表の中央上部に配置
-    for i, d in enumerate(all_dates):
-        label = f"{d.day}({get_day_of_week_jp(d.strftime('%Y%m%d'))})"
-        x = tick_positions[i]
-        ax.text(x, -1, label, ha='center', va='bottom', fontsize=9)
 
     ylabels = []
     for i, (sd, ed, stime, etime, label) in enumerate(events):
@@ -142,8 +140,9 @@ async def main():
 
     ax.set_yticks(range(len(events)))
     ax.set_yticklabels(ylabels, fontsize=9)
-    ax.set_xticklabels([''] * len(all_dates))  # ラベルは text() で描画済み
-    ax.tick_params(axis='x', labelsize=0)
+    ax.set_xticklabels([f"{d.day}({get_day_of_week_jp(d.strftime('%Y%m%d'))})" for d in all_dates],
+                       rotation=45, ha='right')
+    ax.tick_params(axis='x', labelsize=8)
     plt.subplots_adjust(top=0.85)
 
     ax.xaxis.set_ticks_position('top')
