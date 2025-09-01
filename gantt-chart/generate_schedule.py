@@ -1,4 +1,4 @@
-import matplotlib.pyplot as plt
+ import matplotlib.pyplot as plt
 from matplotlib.colors import to_rgba
 from matplotlib.patches import FancyBboxPatch
 from matplotlib.dates import date2num
@@ -112,10 +112,10 @@ async def main():
     fig_height = 400 / dpi
     fig, ax = plt.subplots(figsize=(fig_width, fig_height), dpi=dpi)
 
-    # 土日背景（ズレ防止）
+    # 土日背景（左に1日ずらして補正）
     for d in all_dates:
         if d.weekday() in [5, 6]:  # 土曜・日曜のみ
-            start = date2num(d)
+            start = date2num(d) - 1
             end = start + 1
             ax.axvspan(start, end, color=to_rgba("pink", 0.2))
 
