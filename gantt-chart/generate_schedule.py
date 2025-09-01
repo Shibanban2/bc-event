@@ -7,7 +7,6 @@ import aiohttp
 import asyncio
 import matplotlib.font_manager as fm
 
-
 # ================== フォント設定 ==================
 def set_japanese_font():
     plt.rcParams["font.family"] = "IPAPGothic"
@@ -81,7 +80,7 @@ async def main():
     set_japanese_font()
 
     gatya_rows = await fetch_tsv("https://shibanban2.github.io/bc-event/token/gatya.tsv")
-    name_rows = await fetch_tsv("https://shibanban2.github.io/bc-event/name.tsv")
+    name_rows = await fetch_tsv("https://shibanban2.github.io/bc-event/token/gatyaName.tsv")
     name_map = {int(r[0]): r[1] for r in name_rows if r and r[0].isdigit()}
 
     today_str = datetime.now().strftime("%Y%m%d")
@@ -130,7 +129,11 @@ async def main():
     ax.set_yticks(range(len(events)))
     ax.set_yticklabels(ylabels, fontsize=9)
     ax.set_xticks([date2num(d) for d in all_dates])
-    ax.set_xticklabels([f"{d.day}({get_day_of_week_jp(d.strftime('%Y%m%d'))})" for d in all_dates], rotation=0)
+    ax.set_xticklabels([f"{d.day}({get_day_of_week_jp(d.strftime('%Y%m%d'))})" for d in all_dates],
+                       rotation=45, ha='right')
+    ax.tick_params(axis='x', labelsize=8)
+    plt.subplots_adjust(top=0.85)
+
     ax.xaxis.set_ticks_position('top')
     ax.xaxis.set_label_position('top')
     ax.invert_yaxis()
