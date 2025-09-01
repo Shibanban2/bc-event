@@ -1,10 +1,6 @@
 name: Generate Schedule Image
 
 on:
-  push:
-    branches: ["main"]
-  schedule:
-    - cron: "*/45 * * * *"
   workflow_dispatch:
 
 jobs:
@@ -36,4 +32,3 @@ jobs:
           publish_branch: gh-pages
           publish_dir: .
           force_orphan: true
-
