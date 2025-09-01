@@ -150,11 +150,15 @@ async def main():
     ax.invert_yaxis()
     ax.grid(True, which='both', linestyle='--', alpha=0.5)
 
+    # ---- 左下にクレジット追加 ----
+    fig.text(
+        0.01, 0.01, "https://x.com/bcevent_bot",
+        ha="left", va="bottom", fontsize=8, color="gray"
+    )
+
     plt.tight_layout()
     plt.savefig("schedule.png", dpi=dpi)
     print("✅ schedule.png generated!")
 
 if __name__ == "__main__":
     asyncio.run(main())
-    
-    
