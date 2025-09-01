@@ -93,10 +93,9 @@ async def main():
         return
 
     pastel_colors = [
-        "#BFD8B8", "#FFE0A3", "#C4B7E5", "#A8E6CF", "#FFCBC1", "#E0BBE4",
-        "#FFF5BA", "#D5ECC2", "#FFDAC1", "#E0F7FA", "#F6C6EA", "#C2F0FC",
-        "#F9F3CC", "#C8E6C9", "#FFD3B6", "#E1BEE7", "#B2EBF2", "#FFABAB",
-        "#D7CCC8", "#F8BBD0", "#DCEDC8", "#FFCDD2", "#CFD8DC", "#F0F4C3"
+        "#BFD8B8", "#FFE0A3", "#C4B7E5", "#A8E6CF",
+        "#FFCBC1", "#E0BBE4", "#FFF5BA", "#D5ECC2",
+        "#FFDAC1", "#E0F7FA"
     ]
 
     start_dates = [datetime.strptime(sd, "%Y%m%d") for sd, _, _, _, _ in events]
@@ -112,9 +111,8 @@ async def main():
     fig_height = 400 / dpi
     fig, ax = plt.subplots(figsize=(fig_width, fig_height), dpi=dpi)
 
-    # 土日背景（正確な判定）
     for d in all_dates:
-        if d.weekday() in [5, 6]:  # 土:5, 日:6
+        if d.weekday() >= 5:
             ax.axvspan(date2num(d), date2num(d + timedelta(days=1)), color=to_rgba("pink", 0.2))
 
     ylabels = []
@@ -128,13 +126,8 @@ async def main():
         draw_rounded_bar(ax, i, left, duration, pastel_colors[i % len(pastel_colors)])
         ylabels.append(label)
 
-    # ラベル描画（【確定】は赤）
-    for i, label in enumerate(ylabels):
-        color = 'red' if '【確定】' in label else 'black'
-        ax.text(-0.5, i, label, va='center', ha='left', fontsize=9, color=color)
-
     ax.set_yticks(range(len(events)))
-    ax.set_yticklabels([''] * len(events))  # 空にして text() で描画
+    ax.set_yticklabels(ylabels, fontsize=9)
     ax.set_xticks([date2num(d) for d in all_dates])
     ax.set_xticklabels([f"{d.day}({get_day_of_week_jp(d.strftime('%Y%m%d'))})" for d in all_dates],
                        rotation=45, ha='right')
