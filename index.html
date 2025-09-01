@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>にゃんこ大戦争スケジュール</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="favicon.ico" type="image/x-icon" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    
+    .modal-content {
+      max-width: 400px;
+      max-height: 300px;
+      overflow-y: auto;
+      margin: auto;
+      padding: 16px;
+      background: #fff;
+      border-radius: 8px;
+    }
+    
+  </style>
+</head>
+<body>
+  <header>
+    にゃんこ大戦争スケジュール
+    <a class="tsv-link" href="https://x.com/BCevent_bot" target="_blank">contact me</a>
+    <button id="save-btn">画像として保存</button>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('gatya')">gatya</div>
+    <div class="tab" onclick="showTab('sale')">sale</div>
+    <div class="tab" onclick="showTab('item')">item</div>
+    <div class="tab" onclick="showTab('mission')">mission</div>
+    <div class="tab" onclick="showTab('all')">すべての予定</div>
+</div>
+
+  </div>
+
+  <div class="checkbox-container">
+    <input type="checkbox" id="showAll" />
+    <label for="showAll">開催中のイベントも表示</label>
+  </div>
+
+  <main id="main-container">
+    <div id="gatya" class="content"></div>
+    <div id="sale" class="content hidden"></div>
+    <div id="item" class="content hidden"></div>
+    <div id="mission" class="content hidden"></div>
+    <div id="all" class="content hidden"></div>
+  </main>
+
+
+  <div id="detail-modal" class="modal-backdrop">
+    <div class="modal-content">
+      <span id="modal-close">&times;</span>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+
+
+  <script src="script.js"></script>
+  
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-69V7PZDKRL"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-69V7PZDKRL');
+</script>
+</body>
+</html>
+
