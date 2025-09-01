@@ -80,7 +80,7 @@ async def main():
     set_japanese_font()
 
     gatya_rows = await fetch_tsv("https://shibanban2.github.io/bc-event/token/gatya.tsv")
-    name_rows = await fetch_tsv("https://shibanban2.github.io/bc-event/token/gatyaName.tsv")
+    name_rows = await fetch_tsv("https://shibanban2.github.io/bc-event/name.tsv")
     name_map = {int(r[0]): r[1] for r in name_rows if r and r[0].isdigit()}
 
     today_str = datetime.now().strftime("%Y%m%d")
