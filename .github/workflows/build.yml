@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - main   # ← GAS が push したら自動で実行
+      - main
 
 jobs:
   build:
@@ -14,7 +14,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          persist-credentials: false
+          token: ${{ secrets.GITHUB_TOKEN }}  # これを追加！
+          fetch-depth: 0  # push するので浅い clone はダメ
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -37,5 +38,3 @@ jobs:
           git add schedule.png
           git commit -m "Update schedule image" || echo "No changes to commit"
           git push origin main
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
