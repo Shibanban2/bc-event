@@ -80,7 +80,7 @@ async def main():
     set_japanese_font()
 
     gatya_rows = await fetch_tsv("https://shibanban2.github.io/bc-event/token/gatya.tsv")
-    name_rows = await fetch_tsv("https://shibanban2.github.io/bc-event/name.tsv")  # ← URL変更済み
+    name_rows = await fetch_tsv("https://shibanban2.github.io/bc-event/name.tsv")
     name_map = {r[0]: r[1] for r in name_rows if len(r) >= 2}
 
     today_str = datetime.now().strftime("%Y%m%d")
@@ -112,10 +112,12 @@ async def main():
     fig_height = 400 / dpi
     fig, ax = plt.subplots(figsize=(fig_width, fig_height), dpi=dpi)
 
-    # 土日背景（明示的に修正）
+    # 土日背景（ズレ防止）
     for d in all_dates:
         if d.weekday() in [5, 6]:  # 土曜・日曜のみ
-            ax.axvspan(date2num(d), date2num(d + timedelta(days=1)), color=to_rgba("pink", 0.2))
+            start = date2num(d)
+            end = start + 1
+            ax.axvspan(start, end, color=to_rgba("pink", 0.2))
 
     ylabels = []
     for i, (sd, ed, stime, etime, label) in enumerate(events):
