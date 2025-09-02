@@ -80,9 +80,9 @@ def draw_rounded_bar(ax, y, start_dt, width_days, color):
     rect = FancyBboxPatch(
         (start_num, y - 0.4), width_days, 0.8,
         boxstyle="round,pad=0.02",
-        linewidth=1,
-        edgecolor='black',
-        facecolor=color
+        linewidth=0.5,               # 縁を細く
+        edgecolor="#555555",          # 黒の彩度を落とした色
+        facecolor=to_rgba(color, 0.7) # 色を少し薄めて優しい感じ
     )
     ax.add_patch(rect)
 
