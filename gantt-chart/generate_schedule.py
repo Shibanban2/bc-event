@@ -33,6 +33,17 @@ async def fetch_tsv(url):
                 rows.append(row)
             return rows
 
+# ================== 祝日取得 ==================
+async def fetch_holidays(year):
+    url = f"https://holidays-jp.github.io/api/v1/{year}/date.json"
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as resp:
+            if resp.status != 200:
+                print(f"Failed to fetch holidays for {year}: Status {resp.status}")
+                return set()
+            data = await resp.json()
+            return set(data.keys())  # "YYYY-MM-DD" 形式
+
 # ================== 曜日取得 ==================
 def get_day_of_week_jp(date_str):
     date = datetime.strptime(date_str, "%Y%m%d")
@@ -79,6 +90,7 @@ def draw_rounded_bar(ax, y, start_dt, width_days, color):
 async def main():
     set_japanese_font()
 
+    # ---- TSV読み込み ----
     gatya_rows = await fetch_tsv("https://shibanban2.github.io/bc-event/token/gatya.tsv")
     name_rows = await fetch_tsv("https://shibanban2.github.io/bc-event/name.tsv")
     name_map = {r[0]: r[1] for r in name_rows if len(r) >= 2}
@@ -92,6 +104,7 @@ async def main():
         print("No events found")
         return
 
+    # ---- 色リスト ----
     pastel_colors = [
         "#BFD8B8", "#FFE0A3", "#C4B7E5", "#A8E6CF", "#FFCBC1", "#E0BBE4",
         "#FFF5BA", "#D5ECC2", "#FFDAC1", "#E0F7FA", "#F6C6EA", "#C2F0FC",
@@ -99,6 +112,7 @@ async def main():
         "#D7CCC8", "#F8BBD0", "#DCEDC8", "#FFCDD2", "#CFD8DC", "#F0F4C3"
     ]
 
+    # ---- 日付範囲 ----
     start_dates = [datetime.strptime(sd, "%Y%m%d") for sd, _, _, _, _ in events]
     end_dates = [datetime.strptime(ed, "%Y%m%d") for _, ed, _, _, _ in events]
     min_date = min(start_dates)
@@ -106,7 +120,10 @@ async def main():
     num_days = (max_date - min_date).days + 1
     all_dates = [min_date + timedelta(days=i) for i in range(num_days)]
 
-    # 固定サイズ（700×400px）
+    # ---- 祝日データ取得 ----
+    holidays = await fetch_holidays(min_date.year) | await fetch_holidays(max_date.year)
+
+    # ---- 図のサイズ設定 ----
     dpi = 100
     fig_width = 700 / dpi
     fig_height = 400 / dpi
@@ -114,9 +131,10 @@ async def main():
 
     tick_positions = [date2num(d) for d in all_dates]
 
-    # ---- 土日背景を日単位で塗る ----
+    # ---- 土日 + 祝日背景を塗る ----
     for d in all_dates:
-        if d.weekday() in [5, 6]:  # 土曜・日曜
+        date_str_dash = d.strftime("%Y-%m-%d")
+        if d.weekday() in [5, 6] or date_str_dash in holidays:
             start = date2num(d)
             end = date2num(d + timedelta(days=1))
             ax.axvspan(start, end, color=to_rgba("pink", 0.2), zorder=0)
@@ -162,5 +180,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-    
-    
