@@ -82,7 +82,7 @@ def draw_rounded_bar(ax, y, start_dt, width_days, color):
         boxstyle="round,pad=0.02",
         linewidth=0.5,               # 縁を細く
         edgecolor="#555555",          # 黒の彩度を落とした色
-        facecolor=to_rgba(color, 0.7) # 柔らかい色に
+        facecolor=to_rgba(color, 0.7) # 色を少し薄めて優しい感じ
     )
     ax.add_patch(rect)
 
@@ -104,13 +104,12 @@ async def main():
         print("No events found")
         return
 
-    # ---- 色リスト（柔らかめパステル＋多め） ----
+    # ---- 色リスト ----
     pastel_colors = [
-        "#FFB3BA","#FFDFBA","#FFFFBA","#BAFFC9","#BAE1FF","#E0BBE4",
-        "#FFCBC1","#C8E6C9","#F6D6AD","#D0E1F9","#F9C6C9","#E0F7FA",
-        "#F3E5F5","#FFF9C4","#C8E6C9","#FFD3B6","#E1BEE7","#B2EBF2",
-        "#FFABAB","#D7CCC8","#F8BBD0","#DCEDC8","#FFCDD2","#CFD8DC",
-        "#F0F4C3","#D5ECC2","#FFDAC1","#F9F3CC"
+        "#BFD8B8", "#FFE0A3", "#C4B7E5", "#A8E6CF", "#FFCBC1", "#E0BBE4",
+        "#FFF5BA", "#D5ECC2", "#FFDAC1", "#E0F7FA", "#F6C6EA", "#C2F0FC",
+        "#F9F3CC", "#C8E6C9", "#FFD3B6", "#E1BEE7", "#B2EBF2", "#FFABAB",
+        "#D7CCC8", "#F8BBD0", "#DCEDC8", "#FFCDD2", "#CFD8DC", "#F0F4C3"
     ]
 
     # ---- 日付範囲 ----
@@ -130,7 +129,9 @@ async def main():
     fig_height = 400 / dpi
     fig, ax = plt.subplots(figsize=(fig_width, fig_height), dpi=dpi)
 
-    # ---- 土日 + 祝日背景 ----
+    tick_positions = [date2num(d) for d in all_dates]
+
+    # ---- 土日 + 祝日背景を塗る ----
     for d in all_dates:
         date_str_dash = d.strftime("%Y-%m-%d")
         if d.weekday() in [5, 6] or date_str_dash in holidays:
@@ -138,12 +139,15 @@ async def main():
             end = date2num(d + timedelta(days=1))
             ax.axvspan(start, end, color=to_rgba("pink", 0.2), zorder=0)
 
-    # ---- 日付ラベル（マスの上） ----
-    for i, d in enumerate(all_dates):
-        x = date2num(d) + 0.5
-        rotation_angle = 45 if num_days >= 14 else 0
-        ax.text(x, -1, f"{d.day}({get_day_of_week_jp(d.strftime('%Y%m%d'))})",
-                ha="center", va="bottom", rotation=rotation_angle, fontsize=9)
+    # ---- 日付ラベル ----
+    rotation_angle = 45 if num_days >= 14 else 0
+    ax.set_xticks(tick_positions)
+    ax.set_xticklabels(
+        [f"{d.day}({get_day_of_week_jp(d.strftime('%Y%m%d'))})" for d in all_dates],
+        rotation=rotation_angle, ha="center", fontsize=9
+    )
+    ax.xaxis.set_ticks_position("top")
+    ax.xaxis.set_label_position("top")
 
     # ---- イベント棒描画 ----
     ylabels = []
@@ -164,7 +168,7 @@ async def main():
     ax.invert_yaxis()
     ax.grid(True, which='both', linestyle='--', alpha=0.5)
 
-    # ---- 左下にクレジット ----
+    # ---- 左下にクレジット追加 ----
     fig.text(
         0.01, 0.01, "https://x.com/bcevent_bot",
         ha="left", va="bottom", fontsize=8, color="gray"
