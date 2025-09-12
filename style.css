@@ -151,6 +151,22 @@ main {
   cursor: pointer;
 }
 
+.gantt-btn {
+  flex: 0 0 auto;
+  padding: 0.6rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  background: #eee;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-left: 4px;
+}
+
+.gantt-btn:hover {
+  background: #ddd;
+}
+
+
 @media (max-width: 768px) {
   header {
     font-size: 1.1rem;
