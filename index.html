@@ -43,18 +43,15 @@
     <label for="showAll">開催中のイベントも表示</label>
   </div>
 
-<main id="main-container">
-  <!-- Gantt Chart ボタン -->
-  <div style="text-align:center; margin: 8px 0;">
-    <button id="gantt-btn" style="padding: 6px 12px; font-size:0.9rem; cursor:pointer;">Gantt Chart</button>
-  </div>
+<div class="tabs">
+  <div class="tab active" onclick="showTab('gatya')">gatya</div>
+  <button class="tab gantt-tab-btn" id="gantt-btn">カレンダー画像</button> 
+  <div class="tab" onclick="showTab('sale')">sale</div>
+  <div class="tab" onclick="showTab('item')">item</div>
+  <div class="tab" onclick="showTab('mission')">mission</div>
+  <div class="tab" onclick="showTab('all')">すべての予定</div>
+</div>
 
-  <div id="gatya" class="content"></div>
-  <div id="sale" class="content hidden"></div>
-  <div id="item" class="content hidden"></div>
-  <div id="mission" class="content hidden"></div>
-  <div id="all" class="content hidden"></div>
-</main>
 
 
 
