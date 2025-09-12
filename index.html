@@ -30,7 +30,6 @@
 
   <div class="tabs">
     <div class="tab active" onclick="showTab('gatya')">gatya</div>
-    <button class="gantt-btn" onclick="showGantt()">Gantt Chart</button>
     <div class="tab" onclick="showTab('sale')">sale</div>
     <div class="tab" onclick="showTab('item')">item</div>
     <div class="tab" onclick="showTab('mission')">mission</div>
@@ -44,13 +43,19 @@
     <label for="showAll">開催中のイベントも表示</label>
   </div>
 
-  <main id="main-container">
-    <div id="gatya" class="content"></div>
-    <div id="sale" class="content hidden"></div>
-    <div id="item" class="content hidden"></div>
-    <div id="mission" class="content hidden"></div>
-    <div id="all" class="content hidden"></div>
-  </main>
+<main id="main-container">
+  <!-- Gantt Chart ボタン -->
+  <div style="text-align:center; margin: 8px 0;">
+    <button id="gantt-btn" style="padding: 6px 12px; font-size:0.9rem; cursor:pointer;">Gantt Chart</button>
+  </div>
+
+  <div id="gatya" class="content"></div>
+  <div id="sale" class="content hidden"></div>
+  <div id="item" class="content hidden"></div>
+  <div id="mission" class="content hidden"></div>
+  <div id="all" class="content hidden"></div>
+</main>
+
 
 
   <div id="detail-modal" class="modal-backdrop">
