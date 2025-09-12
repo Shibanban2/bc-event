@@ -155,7 +155,7 @@ async def main():
         start = datetime.strptime(sd, "%Y%m%d")
         end = datetime.strptime(ed, "%Y%m%d")
         start_offset = timedelta(days=stime / 2400) if stime != 0 else timedelta(0)
-        end_offset = timedelta(days=etime / 2400) if etime != 0 else timedelta(days=1)
+        end_offset = timedelta(days=etime / 2400) if etime != 0 else timedelta(0)
         left = start + start_offset
         duration = (end + end_offset - start - start_offset).total_seconds() / 86400
         draw_rounded_bar(ax, i, left, duration, pastel_colors[i % len(pastel_colors)])
