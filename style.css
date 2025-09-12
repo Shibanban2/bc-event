@@ -150,21 +150,25 @@ main {
   font-size: 2rem;
   cursor: pointer;
 }
-
-.gantt-btn {
+.gantt-link {
   flex: 0 0 auto;
+  text-align: center;
   padding: 0.6rem;
   font-size: 0.9rem;
-  cursor: pointer;
-  background: #eee;
-  border: none;
+  background: #ddd;
   border-bottom: 2px solid transparent;
-  margin-left: 4px;
+  text-decoration: none;
+  color: black;
 }
 
-.gantt-btn:hover {
-  background: #ddd;
+.gantt-link:hover {
+  background: #ccc;
 }
+
+.gantt-link:active {
+  background: #bbb;
+}
+
 
 
 @media (max-width: 768px) {
