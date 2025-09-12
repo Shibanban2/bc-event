@@ -178,15 +178,6 @@ document.getElementById('save-btn').addEventListener('click', () => {
   const mm = String(today.getMonth() + 1).padStart(2, '0');
   const dd = String(today.getDate()).padStart(2, '0');
   const fileName = `nyanko_schedule_${yyyy}-${mm}-${dd}.png`;
-  
-// Gantt Chart ボタンのクリック
-document.getElementById('gantt-btn').addEventListener('click', () => {
-  const modal = document.getElementById('detail-modal');
-  const modalBody = document.getElementById('modal-body');
-
-  modalBody.innerHTML = `<img src="https://shibanban2.github.io/bc-event/schedule.png" style="width:100%; height:auto;" />`;
-  modal.classList.add('show');
-});
 
   html2canvas(document.body, {
     backgroundColor: '#ffffff',
