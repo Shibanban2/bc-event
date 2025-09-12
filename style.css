@@ -150,24 +150,6 @@ main {
   font-size: 2rem;
   cursor: pointer;
 }
-.gantt-link {
-  flex: 0 0 auto;
-  text-align: center;
-  padding: 0.6rem;
-  font-size: 0.9rem;
-  background: #ddd;
-  border-bottom: 2px solid transparent;
-  text-decoration: none;
-  color: black;
-}
-
-.gantt-link:hover {
-  background: #ccc;
-}
-
-.gantt-link:active {
-  background: #bbb;
-}
 
 
 
