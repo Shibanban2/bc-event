@@ -141,6 +141,13 @@ main {
   font-size: 0.8rem;  
   line-height: 1.4;   
 }
+.modal-content #modal-close {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  font-size: 2rem;
+  cursor: pointer;
+}
 
 
 @media (max-width: 768px) {
