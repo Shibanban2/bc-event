@@ -110,42 +110,44 @@ for (let i = 0; i < entries.length; i++) {
   const text = typeof item === 'string' ? item : item.title;
   const detail = typeof item === 'string' ? '' : item.detail;
 
-      if (key === 'gatya' && (/プラチナガチャ|レジェンドガチャ/.test(text))) continue;
-      if (key === 'item' && (/道場報酬|報酬設定|ログボ:35030|ログボ:35031|ログボ:35032|ログボ:981/.test(text))) continue;
-      if (key === 'sale' && (/絶・誘惑のシンフォニー|地図グループ16|ジャンボーグ鈴木大降臨|地図グループ17|地図グループ18/.test(text))) continue;
-      if (key === 'mission' && (/にゃんチケドロップステージを3回クリアしよう|XPドロップステージを5回クリアしよう|レジェンドストーリーを5回クリアしよう|ガマトトを探検に出発させて7回探検終了させよう|ウィークリーミッションをすべてクリアしよう|ガマトトを探検に出発させて10回探検終了させよう|レジェンドストーリーを10回クリアしよう|対象ステージは「にゃんこミッションとは？」をご確認下さい|マタタビドロップステージを3回クリアしよう|おかえりミッション/.test(text))) continue;
+  if (key === 'gatya' && (/プラチナガチャ|レジェンドガチャ/.test(text))) continue;
+  if (key === 'item' && (/道場報酬|報酬設定|ログボ:35030|ログボ:35031|ログボ:35032|ログボ:981/.test(text))) continue;
+  if (key === 'sale' && (/絶・誘惑のシンフォニー|地図グループ16|ジャンボーグ鈴木大降臨|地図グループ17|地図グループ18/.test(text))) continue;
+  if (key === 'mission' && (/にゃんチケドロップステージを3回クリアしよう|XPドロップステージを5回クリアしよう|レジェンドストーリーを5回クリアしよう|ガマトトを探検に出発させて7回探検終了させよう|ウィークリーミッションをすべてクリアしよう|ガマトトを探検に出発させて10回探検終了させよう|レジェンドストーリーを10回クリアしよう|対象ステージは「にゃんこミッションとは？」をご確認下さい|マタタビドロップステージを3回クリアしよう|おかえりミッション/.test(text))) continue;
 
-      const { end } = parseDates(text);
-      const permanent = isPermanent(text);
+  const { start, end } = parseDates(text);
+  const permanent = isPermanent(text);
 
-      let shouldShow = false;
-      if (showCurrent) {
-        shouldShow = permanent || (start && now >= start && (!end || now <= end)) || (start && now < start);
-      } else {
-        shouldShow = permanent || (start && now < start);
-      }
+  let shouldShow = false;
+  if (showCurrent) {
+    shouldShow = permanent || (start && now >= start && (!end || now <= end)) || (start && now < start);
+  } else {
+    shouldShow = permanent || (start && now < start);
+  }
 
-      if (!shouldShow) continue;
+  if (!shouldShow) continue;
 
-      const div = document.createElement('div');
-      div.className = 'event-card';
-      if (!/ミッション/.test(text)) {
-        if (/確定|闇目|ガチャ半額リセット/.test(text)) {
-          div.classList.add('red');
-        } else if (/強襲|ランキングの間|異次元コロシアム/.test(text)) {
-          div.classList.add('blue');
-        }
-      }
+  const div = document.createElement('div');
+  div.className = 'event-card';
 
-      div.innerHTML = text;
-
-      if (detail) {
-        div.addEventListener('click', () => openModal(detail));
-      }
-
-      container.appendChild(div);
-      count++;
+  if (!/ミッション/.test(text)) {
+    if (/確定|闇目|ガチャ半額リセット/.test(text)) {
+      div.classList.add('red');
+    } else if (/強襲|ランキングの間|異次元コロシアム/.test(text)) {
+      div.classList.add('blue');
     }
+  }
+
+  div.innerHTML = text;
+
+  if (detail) {
+    div.addEventListener('click', () => openModal(detail));
+  }
+
+  container.appendChild(div);
+  count++;
+}
+
 
     if (count === 0) {
       const none = document.createElement('div');
