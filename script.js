@@ -86,12 +86,26 @@ function renderContent(id, showCurrent) {
     title.textContent = key;
     container.appendChild(title);
 
-    const entries = data[key] || [];
+    let entries = data[key] || [];
+
+    // ★ ここで日付順にソート
+    entries = entries
+      .map(entry => {
+        const text = typeof entry === 'string' ? entry : entry.title;
+        const { start } = parseDates(text);
+        return { entry, text, start };
+      })
+      .sort((a, b) => {
+        if (!a.start && !b.start) return 0;
+        if (!a.start) return 1; // 日付なしは後ろに
+        if (!b.start) return -1;
+        return a.start - b.start;
+      });
+
     let count = 0;
 
     for (let i = 0; i < entries.length; i++) {
-      const entry = entries[i];
-      const text = typeof entry === 'string' ? entry : entry.title;
+      const { entry, text, start } = entries[i];
       let detail = typeof entry === 'string' ? '' : entry.detail;
 
       if (key === 'gatya' && (/プラチナガチャ|レジェンドガチャ/.test(text))) continue;
@@ -99,7 +113,7 @@ function renderContent(id, showCurrent) {
       if (key === 'sale' && (/絶・誘惑のシンフォニー|地図グループ16|ジャンボーグ鈴木大降臨|地図グループ17|地図グループ18/.test(text))) continue;
       if (key === 'mission' && (/にゃんチケドロップステージを3回クリアしよう|XPドロップステージを5回クリアしよう|レジェンドストーリーを5回クリアしよう|ガマトトを探検に出発させて7回探検終了させよう|ウィークリーミッションをすべてクリアしよう|ガマトトを探検に出発させて10回探検終了させよう|レジェンドストーリーを10回クリアしよう|対象ステージは「にゃんこミッションとは？」をご確認下さい|マタタビドロップステージを3回クリアしよう|おかえりミッション/.test(text))) continue;
 
-      const { start, end } = parseDates(text);
+      const { end } = parseDates(text);
       const permanent = isPermanent(text);
 
       let shouldShow = false;
@@ -113,16 +127,13 @@ function renderContent(id, showCurrent) {
 
       const div = document.createElement('div');
       div.className = 'event-card';
-if (!/ミッション/.test(text)) {
-  if (/確定|闇目|ガチャ半額リセット/.test(text)) {
-    div.classList.add('red');
-  } else if (/強襲|ランキングの間|異次元コロシアム/.test(text)) {
-    div.classList.add('blue');
-  }
-}
-
-
-
+      if (!/ミッション/.test(text)) {
+        if (/確定|闇目|ガチャ半額リセット/.test(text)) {
+          div.classList.add('red');
+        } else if (/強襲|ランキングの間|異次元コロシアム/.test(text)) {
+          div.classList.add('blue');
+        }
+      }
 
       div.innerHTML = text;
 
@@ -141,6 +152,7 @@ if (!/ミッション/.test(text)) {
     }
   }
 }
+
 
 function showTab(id) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
