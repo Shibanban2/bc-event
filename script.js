@@ -86,21 +86,22 @@ function renderContent(id, showCurrent) {
     title.textContent = key;
     container.appendChild(title);
 
+ 
     let entries = data[key] || [];
 
-    // ★ ここで日付順にソート
-    entries = entries
-      .map(entry => {
-        const text = typeof entry === 'string' ? entry : entry.title;
-        const { start } = parseDates(text);
-        return { entry, text, start };
-      })
-      .sort((a, b) => {
-        if (!a.start && !b.start) return 0;
-        if (!a.start) return 1; // 日付なしは後ろに
-        if (!b.start) return -1;
-        return a.start - b.start;
+    // ✅ チェックされていたら日付順に並べ替え
+    if (document.getElementById('sortByDate').checked) {
+      entries = [...entries].sort((a, b) => {
+        const textA = typeof a === 'string' ? a : a.title;
+        const textB = typeof b === 'string' ? b : b.title;
+        const { start: startA } = parseDates(textA);
+        const { start: startB } = parseDates(textB);
+        if (!startA && !startB) return 0;
+        if (!startA) return 1;
+        if (!startB) return -1;
+        return startA - startB;
       });
+    }
 
     let count = 0;
 
@@ -169,6 +170,13 @@ document.getElementById('showAll').addEventListener('change', () => {
   const id = activeTab === 'すべての予定' ? 'all' : activeTab;
   renderContent(id, document.getElementById('showAll').checked);
 });
+
+document.getElementById('sortByDate').addEventListener('change', () => {
+  const activeTab = document.querySelector('.tab.active').textContent.trim();
+  const id = activeTab === 'すべての予定' ? 'all' : activeTab;
+  renderContent(id, document.getElementById('showAll').checked);
+});
+
 
 function openModal(content) {
   document.getElementById('modal-body').innerHTML = content;
