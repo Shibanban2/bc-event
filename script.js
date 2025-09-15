@@ -105,9 +105,10 @@ function renderContent(id, showCurrent) {
 
     let count = 0;
 
-    for (let i = 0; i < entries.length; i++) {
-      const { entry, text, start } = entries[i];
-      let detail = typeof entry === 'string' ? '' : entry.detail;
+for (let i = 0; i < entries.length; i++) {
+  const item = entries[i];
+  const text = typeof item === 'string' ? item : item.title;
+  const detail = typeof item === 'string' ? '' : item.detail;
 
       if (key === 'gatya' && (/プラチナガチャ|レジェンドガチャ/.test(text))) continue;
       if (key === 'item' && (/道場報酬|報酬設定|ログボ:35030|ログボ:35031|ログボ:35032|ログボ:981/.test(text))) continue;
