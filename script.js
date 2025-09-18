@@ -89,7 +89,6 @@ function renderContent(id, showCurrent) {
  
     let entries = data[key] || [];
 
-    // ✅ チェックされていたら日付順に並べ替え
     if (document.getElementById('sortByDate').checked) {
       entries = [...entries].sort((a, b) => {
         const textA = typeof a === 'string' ? a : a.title;
