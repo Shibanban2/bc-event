@@ -1,29 +1,42 @@
-name: Stage PDF Generator
+name: Generate Stage PDF
 
 on:
   workflow_dispatch:
     inputs:
       stage_ids:
-        description: "更新ステージID (カンマ区切り)"
+        description: "更新されたステージID (カンマ区切り)"
         required: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
 
-      - run: npm install puppeteer
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install selenium webdriver-manager
 
       - name: Generate PDFs
         run: |
-          node scripts/generate-pdf.js "${{ github.event.inputs.stage_ids }}"
+          IFS=',' read -ra IDS <<< "${{ github.event.inputs.stage_ids }}"
+          for id in "${IDS[@]}"; do
+            echo "▶️ Processing $id"
+            python scripts/generate_pdf.py "$id"
+          done
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add stage2/
+          git commit -m "Update PDFs: ${{ github.event.inputs.stage_ids }}" || echo "No changes"
+          git push
+
