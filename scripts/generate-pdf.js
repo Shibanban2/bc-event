@@ -1,9 +1,9 @@
-import puppeteer from "puppeteer";
-import fs from "fs";
+const puppeteer = require("puppeteer");
+const fs = require("fs");
 
 async function generate(stageIdsStr) {
   const stageIds = stageIdsStr.split(",").map(s => s.trim());
-  const browser = await puppeteer.launch({ headless: "new" });
+  const browser = await puppeteer.launch({ headless: true });
   const page = await browser.newPage();
 
   for (const id of stageIds) {
@@ -33,3 +33,4 @@ async function generate(stageIdsStr) {
 }
 
 generate(process.argv[2]);
+
