@@ -158,7 +158,7 @@ async def main():
         end_offset = timedelta(days=etime / 2400) if etime != 0 else timedelta(0)
         left = start + start_offset
         duration = (end + end_offset - start - start_offset).total_seconds() / 86400
-        draw_rounded_bar(ax, i, left, duration, pastel_colors[i % len(pastel_colors)])
+        draw_rounded_bar(ax, i + 1, left, duration, pastel_colors[i % len(pastel_colors)])
         ylabels.append(label)
 
     # ---- 軸設定 ----
