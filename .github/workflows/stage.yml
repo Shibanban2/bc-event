@@ -1,0 +1,29 @@
+name: Stage PDF Generator
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage_ids:
+        description: "更新ステージID (カンマ区切り)"
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - run: npm install puppeteer
+
+      - name: Generate PDFs
+        run: |
+          node scripts/generate-pdf.js "${{ github.event.inputs.stage_ids }}"
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
