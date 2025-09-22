@@ -169,6 +169,7 @@ async def main():
     ax.invert_yaxis()
     ax.grid(True, which='both', linestyle='--', alpha=0.5)
     # ---- 今日の位置に赤い点線 ----
+    ax.set_xlim(date2num(min_date), date2num(max_date))
     now = datetime.now()
     ax.axvline(
         date2num(now),                # 現在時刻を数値に変換してX座標に
