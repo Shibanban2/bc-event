@@ -115,8 +115,8 @@ async def main():
     # ---- 日付範囲 ----
     start_dates = [datetime.strptime(sd, "%Y%m%d") for sd, _, _, _, _ in events]
     end_dates = [datetime.strptime(ed, "%Y%m%d") for _, ed, _, _, _ in events]
-    min_date = min(start_dates)
-    max_date = max(end_dates)
+    min_date = min(start_dates) - timedelta(days=1)
+    max_date = max(end_dates) + timedelta(days=1)
     num_days = (max_date - min_date).days + 1
     all_dates = [min_date + timedelta(days=i) for i in range(num_days)]
 
