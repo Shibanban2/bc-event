@@ -160,6 +160,7 @@ async def main():
         duration = (end + end_offset - start - start_offset).total_seconds() / 86400
         draw_rounded_bar(ax, i + 1, left, duration, pastel_colors[i % len(pastel_colors)])
         ylabels.append(label)
+        
 
     # ---- 軸設定 ----
     ax.set_yticks(range(len(events) + 2))  # +2 で上下に余白
@@ -167,6 +168,16 @@ async def main():
     ax.tick_params(axis='x', labelsize=9)
     ax.invert_yaxis()
     ax.grid(True, which='both', linestyle='--', alpha=0.5)
+    # ---- 今日の位置に赤い点線 ----
+    now = datetime.now()
+    ax.axvline(
+        date2num(now),                # 現在時刻を数値に変換してX座標に
+        color="red",                  # 赤色
+        linestyle="--",               # 点線
+        linewidth=1.2,                # 線の太さ
+        zorder=5                      # バーより前に出す
+    )
+
 
     # ---- 左下にクレジット追加 ----
     fig.text(
