@@ -3,7 +3,10 @@ const fs = require("fs");
 
 async function generate(stageIdsStr) {
   const stageIds = stageIdsStr.split(",").map(s => s.trim());
-  const browser = await puppeteer.launch({ headless: true });
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: ["--no-sandbox", "--disable-setuid-sandbox"]
+  });
   const page = await browser.newPage();
 
   for (const id of stageIds) {
@@ -11,7 +14,6 @@ async function generate(stageIdsStr) {
     console.log(`Fetching ${url}...`);
     await page.goto(url, { waitUntil: "networkidle2" });
 
-    // 隠し要素を展開
     await page.evaluate(() => {
       setCurrentStageIndex(120);
       for (let i = 0; i < 120; i++) {
@@ -21,7 +23,6 @@ async function generate(stageIdsStr) {
       }
     });
 
-    // 保存先
     const dir = `public/stage2/${id[0]}`;
     fs.mkdirSync(dir, { recursive: true });
 
@@ -33,4 +34,3 @@ async function generate(stageIdsStr) {
 }
 
 generate(process.argv[2]);
-
