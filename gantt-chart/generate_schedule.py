@@ -162,8 +162,8 @@ async def main():
         ylabels.append(label)
 
     # ---- 軸設定 ----
-    ax.set_yticks(range(len(events)))
-    ax.set_yticklabels(ylabels, fontsize=9)
+    ax.set_yticks(range(len(events) + 2))  # +2 で上下に余白
+    ax.set_yticklabels([""] + ylabels + [""], fontsize=9)  # 最初と最後を空白ラベルに
     ax.tick_params(axis='x', labelsize=9)
     ax.invert_yaxis()
     ax.grid(True, which='both', linestyle='--', alpha=0.5)
