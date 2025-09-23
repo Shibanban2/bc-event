@@ -8,8 +8,8 @@ from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 
 def save_stage_pdf(stage_code):
-    # 保存先の親フォルダ決定 (S/A/B で振り分け)
-    category = stage_code[0]  # 例: "S410" → "S"
+    # 保存先の親フォルダ決定（英字部分すべてを使用してND/SR対応）
+    category = ''.join([c for c in stage_code if c.isalpha()])
     save_dir = os.path.join("stage2", category)
     os.makedirs(save_dir, exist_ok=True)
 
