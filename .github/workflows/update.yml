@@ -1,0 +1,37 @@
+name: Update Stage List
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage_ids:
+        description: "更新されたステージID (例: A064 S410)"
+        required: true
+
+jobs:
+  update-stage-list:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4
+
+      - name: Generate update list
+        run: |
+          echo "${{ github.event.inputs.stage_ids }}" > stage_ids.txt
+          python scripts/generate_update_list.py
+
+      - name: Commit and Push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add update/index.html
+          git commit -m "Update stage list: ${{ github.event.inputs.stage_ids }}" || echo "No changes"
+          git push
