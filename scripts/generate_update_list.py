@@ -33,7 +33,17 @@ def main():
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>更新ステージ一覧</title>
-    <link rel="icon" href="favicon.ico" type="image/x-icon" />
+  <link rel="icon" href="favicon.ico" type="image/x-icon" />
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-J58LT2MPN2"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){{dataLayer.push(arguments);}}
+    gtag('js', new Date());
+    gtag('config', 'G-J58LT2MPN2');
+  </script>
+
   <style>
     body {{
       font-family: "Noto Sans JP", sans-serif;
@@ -61,7 +71,7 @@ def main():
       border-radius: 12px;
       box-shadow: 0 3px 6px rgba(0,0,0,0.1);
       display: flex;
-      flex-wrap: wrap;  /* ← スマホで折り返し */
+      flex-wrap: wrap;  /* スマホで折り返し */
       justify-content: space-between;
       align-items: center;
       transition: transform 0.2s;
@@ -94,7 +104,7 @@ def main():
       background: #005f99;
     }}
 
-    /* スマホ用に調整 */
+    /* スマホ用調整 */
     @media (max-width: 600px) {{
       li {{
         flex-direction: column;
@@ -118,7 +128,6 @@ def main():
 </html>
 """
 
-    # 👇この2行を main() の中にインデントして入れる
     Path("update").mkdir(exist_ok=True)
     Path("update/index.html").write_text(html, encoding="utf-8")
 
