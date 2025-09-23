@@ -7,7 +7,7 @@ def fetch_stage_title(stage_id: str) -> str:
     try:
         r = requests.get(url, timeout=10)
         r.raise_for_status()
-        r.encoding = 'utf-8'  # 文字コードをUTF-8に固定
+        r.encoding = r.apparent_encoding
         soup = BeautifulSoup(r.text, "html.parser")
         h2 = soup.find("h2")
         return h2.text.strip() if h2 else "(タイトル取得失敗)"
