@@ -33,6 +33,7 @@ def main():
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>更新ステージ一覧</title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon" />
   <style>
     body {{
       font-family: "Noto Sans JP", sans-serif;
