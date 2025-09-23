@@ -25,12 +25,13 @@ def main():
         # フォルダは英字部分すべてを使用（ND/SR対応）
         category = ''.join([c for c in sid if c.isalpha()])
         pdf_url = f"https://shibanban2.github.io/bc-event/stage2/{category}/{sid}.pdf"
-        entries.append(f"<li>{sid} {title} — <a href='{pdf_url}'>PDF</a></li>")
+        entries.append(f"<li>{sid} {title} <a href='{pdf_url}'>PDF</a></li>")
 
     html = f"""<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>更新ステージ一覧</title>
   <style>
     body {{
@@ -38,11 +39,13 @@ def main():
       background: #f5f7fa;
       margin: 0;
       padding: 20px;
+      line-height: 1.6;
     }}
     h1 {{
       text-align: center;
       color: #333;
       margin-bottom: 30px;
+      font-size: 1.5rem;
     }}
     ul {{
       list-style: none;
@@ -57,6 +60,7 @@ def main():
       border-radius: 12px;
       box-shadow: 0 3px 6px rgba(0,0,0,0.1);
       display: flex;
+      flex-wrap: wrap;  /* ← スマホで折り返し */
       justify-content: space-between;
       align-items: center;
       transition: transform 0.2s;
@@ -67,11 +71,13 @@ def main():
     .stage-id {{
       font-weight: bold;
       color: #007acc;
+      flex: 0 0 auto;
     }}
     .stage-title {{
-      flex: 1;
-      margin: 0 15px;
+      flex: 1 1 100%;
+      margin: 8px 0;
       color: #444;
+      font-size: 0.95rem;
     }}
     a {{
       text-decoration: none;
@@ -81,9 +87,24 @@ def main():
       border-radius: 8px;
       font-size: 14px;
       transition: background 0.2s;
+      flex: 0 0 auto;
     }}
     a:hover {{
       background: #005f99;
+    }}
+
+    /* スマホ用に調整 */
+    @media (max-width: 600px) {{
+      li {{
+        flex-direction: column;
+        align-items: flex-start;
+      }}
+      .stage-title {{
+        margin: 10px 0;
+      }}
+      a {{
+        align-self: flex-end;
+      }}
     }}
   </style>
 </head>
