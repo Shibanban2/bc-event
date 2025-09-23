@@ -120,7 +120,7 @@ def main():
   </style>
 </head>
 <body>
-  <h1>更新されたステージ一覧</h1>
+  <h1>Ver.14.7</h1>
   <ul>
     {''.join(entries)}
   </ul>
