@@ -7,7 +7,7 @@ def fetch_stage_title(stage_id: str) -> str:
     try:
         r = requests.get(url, timeout=10)
         r.raise_for_status()
-        r.encoding = r.apparent_encoding
+        r.encoding = r.apparent_encoding  # 文字コードを自動判定
         soup = BeautifulSoup(r.text, "html.parser")
         h2 = soup.find("h2")
         return h2.text.strip() if h2 else "(タイトル取得失敗)"
@@ -15,14 +15,16 @@ def fetch_stage_title(stage_id: str) -> str:
         return f"(取得失敗: {e})"
 
 def main():
-    # ステージIDリストを読み込む
+    # ステージIDリストを読み込む（空白・改行で分割）
     with open("stage_ids.txt", "r") as f:
-        stage_ids = f.read().split()
+        stage_ids = f.read().replace(",", " ").split()
 
     entries = []
     for sid in stage_ids:
         title = fetch_stage_title(sid)  # 個別にタイトル取得
-        pdf_url = f"https://shibanban2.github.io/bc-event/stage2/{sid[0]}/{sid}.pdf"
+        # フォルダは英字部分すべてを使用（ND/SR対応）
+        category = ''.join([c for c in sid if c.isalpha()])
+        pdf_url = f"https://shibanban2.github.io/bc-event/stage2/{category}/{sid}.pdf"
         entries.append(f"<li>{sid} {title} — <a href='{pdf_url}'>PDF</a></li>")
 
     html = f"""<!DOCTYPE html>
@@ -45,3 +47,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
