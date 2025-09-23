@@ -27,7 +27,7 @@ def main():
         pdf_url = f"https://shibanban2.github.io/bc-event/stage2/{category}/{sid}.pdf"
         entries.append(f"<li>{sid} {title} — <a href='{pdf_url}'>PDF</a></li>")
 
-html = f"""<!DOCTYPE html>
+    html = f"""<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
@@ -96,10 +96,9 @@ html = f"""<!DOCTYPE html>
 </html>
 """
 
+    # 👇この2行を main() の中にインデントして入れる
     Path("update").mkdir(exist_ok=True)
     Path("update/index.html").write_text(html, encoding="utf-8")
 
-
 if __name__ == "__main__":
     main()
-
