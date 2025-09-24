@@ -9,10 +9,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-    concurrency:
-      group: stage-pdf
-      cancel-in-progress: false
+    runs-on: ubuntu-lates
 
 
     steps:
