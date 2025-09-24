@@ -47,9 +47,5 @@ jobs:
           git add stage2/
           git commit -m "Update PDFs: ${{ github.event.inputs.stage_ids }}" || echo "No changes"
           
-          for i in {1..5}; do
-            git pull --rebase origin main || true
-            git push origin main && break
-            echo "⚠️ Push failed (attempt $i). Retrying in 5s..."
-            sleep 5
-          done
+          git pull --rebase origin main # ← リモートの変更を先に取り込む
+          git push origin main
