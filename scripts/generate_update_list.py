@@ -32,7 +32,7 @@ def main():
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ver.14.7</title>
+  <title>Ver.14.6</title>
   <link rel="icon" href="favicon.ico" type="image/x-icon" />
 
   <!-- Google tag (gtag.js) -->
@@ -120,7 +120,7 @@ def main():
   </style>
 </head>
 <body>
-  <h1>Ver.14.7 新規ステージ</h1>
+  <h1>Ver.14.6 新規ステージ</h1>
   <ul>
     {''.join(entries)}
   </ul>
