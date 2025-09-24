@@ -34,4 +34,5 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add update/index.html
           git commit -m "Update stage list: ${{ github.event.inputs.stage_ids }}" || echo "No changes"
+          git pull --rebase origin main || true
           git push
