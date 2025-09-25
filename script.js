@@ -21,7 +21,7 @@ function preprocessData() {
 
 function parseDates(text) {
   const match = text.match(
-    /(\d{2})\/(\d{2})(?:\((\d{2}):(\d{2})\))?[^0-9]*(\d{2})\/(\d{2})(?:\((\d{2}):(\d{2})\))?|(\d{2})\/(\d{2})(?:\((\d{2}):(\d{2})\))?/
+    /(\d{2})\/(\d{2})(?:\((\d{1,2}):(\d{2})\))?[^0-9]*(\d{2})\/(\d{2})(?:\((\d{1,2}):(\d{2})\))?|(\d{2})\/(\d{2})(?:\((\d{1,2}):(\d{2})\))?/
   );
 
   const now = new Date();
@@ -34,34 +34,43 @@ function parseDates(text) {
       // 開始日
       let startMonth = parseInt(match[1]);
       let startDay = parseInt(match[2]);
-      let startHour = match[3] ? parseInt(match[3]) : 11; // 時間なし → 11:00
-      let startMin = match[4] ? parseInt(match[4]) : 0;
+      let startHour = match[3] ? parseInt(match[3]) : 11; // デフォルト 11:00
+      let startMinute = match[4] ? parseInt(match[4]) : 0;
       let startYear = thisYear;
-      if (now.getMonth() + 1 === 12 && startMonth < 12) startYear++;
-      start = new Date(startYear, startMonth - 1, startDay, startHour, startMin);
+
+      if (now.getMonth() + 1 === 12 && startMonth < 12) {
+        startYear++;
+      }
+      start = new Date(startYear, startMonth - 1, startDay, startHour, startMinute, 0, 0);
 
       // 終了日
       let endMonth = parseInt(match[5]);
       let endDay = parseInt(match[6]);
-      let endHour = match[7] ? parseInt(match[7]) : 11; // 時間なし → 11:00
-      let endMin = match[8] ? parseInt(match[8]) : 0;
+      let endHour = match[7] ? parseInt(match[7]) : 11;
+      let endMinute = match[8] ? parseInt(match[8]) : 0;
       let endYear = thisYear;
-      if (now.getMonth() + 1 === 12 && endMonth < 12) endYear++;
-      end = new Date(endYear, endMonth - 1, endDay, endHour, endMin);
+
+      if (now.getMonth() + 1 === 12 && endMonth < 12) {
+        endYear++;
+      }
+      end = new Date(endYear, endMonth - 1, endDay, endHour, endMinute, 0, 0);
     } else if (match[9]) {
-      // 単日表記
+      // 単発日 (終了日なし)
       let startMonth = parseInt(match[9]);
       let startDay = parseInt(match[10]);
       let startHour = match[11] ? parseInt(match[11]) : 11;
-      let startMin = match[12] ? parseInt(match[12]) : 0;
+      let startMinute = match[12] ? parseInt(match[12]) : 0;
       let startYear = thisYear;
-      if (now.getMonth() + 1 === 12 && startMonth < 12) startYear++;
-      start = new Date(startYear, startMonth - 1, startDay, startHour, startMin);
+
+      if (now.getMonth() + 1 === 12 && startMonth < 12) {
+        startYear++;
+      }
+      start = new Date(startYear, startMonth - 1, startDay, startHour, startMinute, 0, 0);
     }
   }
-
   return { start, end };
 }
+
 
 function isPermanent(text) {
   return /常設|#常設/i.test(text);
