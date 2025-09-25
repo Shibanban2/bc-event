@@ -1,6 +1,5 @@
 let data = {};
 const now = new Date();
-now.setHours(11, 0, 0, 0);
 
 fetch('https://Shibanban2.github.io/bc-event/data.json')
   .then(res => res.json())
@@ -20,9 +19,11 @@ function preprocessData() {
   }
 }
 
-
 function parseDates(text) {
-  const match = text.match(/(\d{2})\/(\d{2})[^0-9]*(\d{2})\/(\d{2})|(\d{2})\/(\d{2})/);
+  const match = text.match(
+    /(\d{2})\/(\d{2})(?:\((\d{2}):(\d{2})\))?[^0-9]*(\d{2})\/(\d{2})(?:\((\d{2}):(\d{2})\))?|(\d{2})\/(\d{2})(?:\((\d{2}):(\d{2})\))?/
+  );
+
   const now = new Date();
   const thisYear = now.getFullYear();
   let start = null;
@@ -33,41 +34,34 @@ function parseDates(text) {
       // 開始日
       let startMonth = parseInt(match[1]);
       let startDay = parseInt(match[2]);
+      let startHour = match[3] ? parseInt(match[3]) : 11; // 時間なし → 11:00
+      let startMin = match[4] ? parseInt(match[4]) : 0;
       let startYear = thisYear;
-
-      // 12月末 → 翌年補正
-      if (now.getMonth() + 1 === 12 && startMonth < 12) {
-        startYear++;
-      }
-
-      start = new Date(startYear, startMonth - 1, startDay);
+      if (now.getMonth() + 1 === 12 && startMonth < 12) startYear++;
+      start = new Date(startYear, startMonth - 1, startDay, startHour, startMin);
 
       // 終了日
-      let endMonth = parseInt(match[3]);
-      let endDay = parseInt(match[4]);
+      let endMonth = parseInt(match[5]);
+      let endDay = parseInt(match[6]);
+      let endHour = match[7] ? parseInt(match[7]) : 11; // 時間なし → 11:00
+      let endMin = match[8] ? parseInt(match[8]) : 0;
       let endYear = thisYear;
-
-      if (now.getMonth() + 1 === 12 && endMonth < 12) {
-        endYear++;
-      }
-
-      end = new Date(endYear, endMonth - 1, endDay);
-      end.setHours(23, 59, 59, 999);
-    } else if (match[5]) {
-      let startMonth = parseInt(match[5]);
-      let startDay = parseInt(match[6]);
+      if (now.getMonth() + 1 === 12 && endMonth < 12) endYear++;
+      end = new Date(endYear, endMonth - 1, endDay, endHour, endMin);
+    } else if (match[9]) {
+      // 単日表記
+      let startMonth = parseInt(match[9]);
+      let startDay = parseInt(match[10]);
+      let startHour = match[11] ? parseInt(match[11]) : 11;
+      let startMin = match[12] ? parseInt(match[12]) : 0;
       let startYear = thisYear;
-
-      if (now.getMonth() + 1 === 12 && startMonth < 12) {
-        startYear++;
-      }
-
-      start = new Date(startYear, startMonth - 1, startDay);
+      if (now.getMonth() + 1 === 12 && startMonth < 12) startYear++;
+      start = new Date(startYear, startMonth - 1, startDay, startHour, startMin);
     }
   }
+
   return { start, end };
 }
-
 
 function isPermanent(text) {
   return /常設|#常設/i.test(text);
@@ -86,7 +80,6 @@ function renderContent(id, showCurrent) {
     title.textContent = key;
     container.appendChild(title);
 
- 
     let entries = data[key] || [];
 
     if (document.getElementById('sortByDate').checked) {
@@ -104,49 +97,48 @@ function renderContent(id, showCurrent) {
 
     let count = 0;
 
-for (let i = 0; i < entries.length; i++) {
-  const item = entries[i];
-  const text = typeof item === 'string' ? item : item.title;
-  const detail = typeof item === 'string' ? '' : item.detail;
+    for (let i = 0; i < entries.length; i++) {
+      const item = entries[i];
+      const text = typeof item === 'string' ? item : item.title;
+      const detail = typeof item === 'string' ? '' : item.detail;
 
-  if (key === 'gatya' && (/プラチナガチャ|レジェンドガチャ/.test(text))) continue;
-  if (key === 'item' && (/道場報酬|報酬設定|ログボ:35030|ログボ:35031|ログボ:35032|ログボ:981/.test(text))) continue;
-  if (key === 'sale' && (/絶・誘惑のシンフォニー|地図グループ16|ジャンボーグ鈴木大降臨|地図グループ17|地図グループ18/.test(text))) continue;
-  if (key === 'mission' && (/にゃんチケドロップステージを3回クリアしよう|XPドロップステージを5回クリアしよう|レジェンドストーリーを5回クリアしよう|ガマトトを探検に出発させて7回探検終了させよう|ウィークリーミッションをすべてクリアしよう|ガマトトを探検に出発させて10回探検終了させよう|レジェンドストーリーを10回クリアしよう|対象ステージは「にゃんこミッションとは？」をご確認下さい|マタタビドロップステージを3回クリアしよう|おかえりミッション/.test(text))) continue;
+      if (key === 'gatya' && (/プラチナガチャ|レジェンドガチャ/.test(text))) continue;
+      if (key === 'item' && (/道場報酬|報酬設定|ログボ:35030|ログボ:35031|ログボ:35032|ログボ:981/.test(text))) continue;
+      if (key === 'sale' && (/絶・誘惑のシンフォニー|地図グループ16|ジャンボーグ鈴木大降臨|地図グループ17|地図グループ18/.test(text))) continue;
+      if (key === 'mission' && (/にゃんチケドロップステージを3回クリアしよう|XPドロップステージを5回クリアしよう|レジェンドストーリーを5回クリアしよう|ガマトトを探検に出発させて7回探検終了させよう|ウィークリーミッションをすべてクリアしよう|ガマトトを探検に出発させて10回探検終了させよう|レジェンドストーリーを10回クリアしよう|対象ステージは「にゃんこミッションとは？」をご確認下さい|マタタビドロップステージを3回クリアしよう|おかえりミッション/.test(text))) continue;
 
-  const { start, end } = parseDates(text);
-  const permanent = isPermanent(text);
+      const { start, end } = parseDates(text);
+      const permanent = isPermanent(text);
 
-  let shouldShow = false;
-  if (showCurrent) {
-    shouldShow = permanent || (start && now >= start && (!end || now <= end)) || (start && now < start);
-  } else {
-    shouldShow = permanent || (start && now < start);
-  }
+      let shouldShow = false;
+      if (showCurrent) {
+        shouldShow = permanent || (start && now >= start && (!end || now < end)) || (start && now < start);
+      } else {
+        shouldShow = permanent || (start && now < start);
+      }
 
-  if (!shouldShow) continue;
+      if (!shouldShow) continue;
 
-  const div = document.createElement('div');
-  div.className = 'event-card';
+      const div = document.createElement('div');
+      div.className = 'event-card';
 
-  if (!/ミッション/.test(text)) {
-    if (/確定|闇目|ガチャ半額リセット/.test(text)) {
-      div.classList.add('red');
-    } else if (/強襲|ランキングの間|異次元コロシアム/.test(text)) {
-      div.classList.add('blue');
+      if (!/ミッション/.test(text)) {
+        if (/確定|闇目|ガチャ半額リセット/.test(text)) {
+          div.classList.add('red');
+        } else if (/強襲|ランキングの間|異次元コロシアム/.test(text)) {
+          div.classList.add('blue');
+        }
+      }
+
+      div.innerHTML = text;
+
+      if (detail) {
+        div.addEventListener('click', () => openModal(detail));
+      }
+
+      container.appendChild(div);
+      count++;
     }
-  }
-
-  div.innerHTML = text;
-
-  if (detail) {
-    div.addEventListener('click', () => openModal(detail));
-  }
-
-  container.appendChild(div);
-  count++;
-}
-
 
     if (count === 0) {
       const none = document.createElement('div');
@@ -155,7 +147,6 @@ for (let i = 0; i < entries.length; i++) {
     }
   }
 }
-
 
 function showTab(id) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -178,7 +169,6 @@ document.getElementById('sortByDate').addEventListener('change', () => {
   const id = activeTab === 'すべての予定' ? 'all' : activeTab;
   renderContent(id, document.getElementById('showAll').checked);
 });
-
 
 function openModal(content) {
   document.getElementById('modal-body').innerHTML = content;
@@ -211,4 +201,3 @@ document.getElementById('save-btn').addEventListener('click', () => {
     link.click();
   });
 });
-
