@@ -151,7 +151,7 @@ function renderContent(id, showCurrent) {
 
     if (count === 0) {
       const none = document.createElement('div');
-      none.textContent = '';
+      none.textContent = '現在、予定されているイベントはありません。';
       container.appendChild(none);
     }
   }
