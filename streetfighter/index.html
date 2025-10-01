@@ -144,7 +144,7 @@ button:hover {
   <div class="button-group">
     <button id="update-url">✅ クリアを反映・URL更新</button>
     <button id="copy-url">🔗 URLをコピー</button>
-    <button id="show-cleared">👁️ クリア済みを見る</button>
+    <button id="show-cleared">クリア済みを見る</button>
   </div>
   <div id="cleared-list"></div>
 </section>
@@ -226,7 +226,7 @@ function getJstTime(timeStr) {
  * @returns {string} YYYY-MM-DD形式の日付文字列
  */
 function getJstDateString(dt) {
-  const JST_OFFSET_HOURS = 9;
+  const JST_OFFSET_HOURS = 0;
   
   // UTCの時刻を9時間ずらして、JST 9:00を日付の区切りとする
   const baseDate = new Date(dt.getTime());
@@ -256,7 +256,7 @@ function addEvent(el, name, timeStart, isUpcoming){
   
   // 終了時刻の計算 (イベント時間帯の表示)
   let duration = DURATION_MS;
-  if(name.includes("バイソン") || name.includes("バルログ") || name.includes("サガット") || name.includes("ベガ")){
+  if(name.includes("") || name.includes("") || name.includes("") || name.includes("")){
       duration = 3 * 60 * 60 * 1000; // 超激ムズを含む4キャラは3時間と仮定
   }
   const timeEnd = new Date(timeStart.getTime() + duration);
