@@ -3,52 +3,170 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>New Challenger スケジュール</title>
+<title>New Challenger スケジュール管理</title>
 <style>
-/* CSSは変更なし */
-body { font-family: Arial, sans-serif; margin:0; padding:0; background:#f9f9f9; color:#333; }
-header { background:#ff5555; color:#fff; text-align:center; padding:12px 0; font-size:1.5em; font-weight:bold; }
-section { margin:16px; }
-h2 { font-size:1.2em; margin-bottom:8px; }
-.event-list { list-style:none; padding:0; margin:0; }
-.event-item { background:#fff; margin-bottom:8px; padding:12px; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,0.1); display:flex; justify-content:space-between; align-items:center; font-size:1em; }
-.event-item.upcoming { border-left:5px solid #ff5555; }
-.event-time { font-weight:bold; margin-right:8px; }
-.check { transform:scale(1.2); cursor:pointer; }
-button { margin:4px 0; padding:6px 10px; border:none; border-radius:4px; cursor:pointer; background:#ff5555; color:#fff; }
-#cleared-list { display:none; margin-top:8px; }
-@media(max-width:600px){ .event-item { font-size:0.9em; padding:10px; } .event-time { margin-right:6px; } }
+/* --- CSS: デザイン調整 --- */
+body { 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+    margin:0; 
+    padding:0; 
+    background:#f2f3f5; /* 背景色を落ち着いた白に近いグレーに */
+    color:#2c3e50; /* 文字色を濃いネイビーに */
+}
+header { 
+    background:#e74c3c; /* ヘッダー色を強調色（赤系）に */
+    color:#fff; 
+    text-align:center; 
+    padding:15px 0; 
+    font-size:1.6em; 
+    font-weight:700; 
+    box-shadow:0 3px 6px rgba(0,0,0,0.1); 
+}
+section { 
+    margin:16px auto; 
+    padding:0 8px;
+    max-width: 800px; /* PCでの見やすさのため最大幅を設定 */
+}
+h2 { 
+    font-size:1.3em; 
+    margin-bottom:10px; 
+    border-bottom:2px solid #bdc3c7; /* 見出しの下線 */
+    padding-bottom:5px;
+    color:#34495e; 
+    font-weight:600;
+}
+h3 {
+    font-size:1.1em;
+    margin-top: 15px;
+    margin-bottom: 5px;
+    color: #8e44ad; /* 明後日以降の日付を見やすく */
+}
+
+/* イベントリスト */
+.event-list { 
+    list-style:none; 
+    padding:0; 
+    margin:0; 
+}
+.event-item { 
+    background:#fff; 
+    margin-bottom:8px; 
+    padding:12px 15px; 
+    border-radius:8px; 
+    box-shadow:0 2px 4px rgba(0,0,0,0.08); 
+    display:flex; 
+    justify-content:space-between; 
+    align-items:center; 
+    font-size:1em; 
+    transition: all 0.2s ease-in-out;
+}
+.event-item.upcoming { 
+    border-left:6px solid #e74c3c; /* 赤色のラインで未クリア強調 */
+}
+
+/* イベント時刻 */
+.event-time { 
+    font-weight:bold; 
+    margin-right:15px; 
+    color:#2980b9; /* 時刻を青色にして目立たせる */
+    flex-shrink: 0; /* 縮まないように */
+    min-width: 100px;
+}
+.event-name {
+    flex-grow: 1;
+}
+
+/* チェックボックス */
+.check { 
+    transform:scale(1.4); 
+    cursor:pointer; 
+    margin-left: 10px;
+    flex-shrink: 0;
+}
+
+/* ボタン類 */
+.button-group {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+button { 
+    padding:8px 15px; 
+    border:none; 
+    border-radius:5px; 
+    cursor:pointer; 
+    background:#3498db; /* ボタンを青色に統一 */
+    color:#fff; 
+    font-weight:600;
+    transition: background 0.2s;
+}
+button:hover {
+    background:#2980b9;
+}
+#update-url { background:#e67e22; } /* 反映ボタンをオレンジ系に */
+#update-url:hover { background:#d35400; }
+
+/* クリア済みリスト */
+#cleared-list { 
+    display:none; 
+    margin-top:10px; 
+    padding: 10px;
+    background: #ecf0f1;
+    border-radius: 5px;
+}
+#cleared-list .event-item {
+    background: #bdc3c7;
+    padding: 8px 10px;
+    font-size: 0.9em;
+    border-left: 4px solid #7f8c8d;
+}
+#cleared-list .remove {
+    background: #c0392b;
+    color: #fff;
+    padding: 2px 8px;
+    font-size: 0.8em;
+}
+
+/* レスポンシブ対応 */
+@media(max-width:600px){ 
+    .event-item { font-size:0.9em; padding:10px; } 
+    .event-time { margin-right:8px; min-width: 80px; } 
+    .button-group button { font-size: 0.9em; padding: 6px 10px; }
+}
 </style>
 </head>
 <body>
 
-<header>New Challenger スケジュール</header>
+<header>New Challenger スケジュール管理</header>
 
 <section>
-  <button id="update-url">チェック反映URL更新</button>
-  <button id="copy-url">URLをコピー</button>
-  <button id="show-cleared">クリア済みを見る</button>
+  <div class="button-group">
+    <button id="update-url">✅ クリアを反映・URL更新</button>
+    <button id="copy-url">🔗 URLをコピー</button>
+    <button id="show-cleared">👁️ クリア済みを見る</button>
+  </div>
   <div id="cleared-list"></div>
 </section>
 
 <section>
-  <h2>今日のイベント</h2>
+  <h2>本日の未クリアイベント</h2>
   <ul id="today" class="event-list"></ul>
 </section>
 
 <section>
-  <h2>明日のイベント</h2>
+  <h2>明日の未クリアイベント</h2>
   <ul id="tomorrow" class="event-list"></ul>
 </section>
 
 <section>
-  <h2>明後日以降</h2>
+  <h2>明後日以降の未クリアイベント</h2>
   <div id="future"></div>
 </section>
 
 <script>
-const events = [
-  // イベントデータは変更なし
+// イベントデータ: 2時間スパンを想定
+const events =[
   {name: "VSリュウ 初級", times:["2025-10-05T12:00","2025-10-06T03:00","2025-10-11T18:00","2025-10-13T12:00","2025-10-17T00:00","2025-10-19T12:00","2025-10-20T03:00"]},
   {name: "VSリュウ 激ムズ", times:["2025-10-04T18:00","2025-10-06T12:00","2025-10-10T12:00","2025-10-12T00:00","2025-10-13T21:00","2025-10-18T18:00"]},
   {name: "VS春麗 初級", times:["2025-10-05T12:00","2025-10-07T12:00","2025-10-11T18:00","2025-10-14T21:00","2025-10-17T00:00","2025-10-19T12:00"]},
@@ -83,6 +201,9 @@ const events = [
   {name: "VSジュリ 激ムズ", times:["2025-10-03T21:00","2025-10-05T09:00","2025-10-07T21:00","2025-10-11T03:00","2025-10-14T18:00","2025-10-17T21:00","2025-10-19T09:00"]}
 ];
 
+// イベントの開催時間を2時間と仮定 (VSバイソン・バルログ・サガット・ベガは3時間と仮定)
+const DURATION_MS = 2 * 60 * 60 * 1000; 
+
 // --- クリア済み管理（URLから） ---
 let urlParams = new URLSearchParams(window.location.search);
 let clearedStages = urlParams.get("cleared") ? urlParams.get("cleared").split(",") : [];
@@ -93,75 +214,68 @@ const tomorrowEl = document.getElementById("tomorrow");
 const futureEl = document.getElementById("future");
 const clearedEl = document.getElementById("cleared-list");
 
-/**
- * イベント時刻文字列をJSTとして解釈したDateオブジェクトを返す
- * @param {string} timeStr - イベント時刻 ("YYYY-MM-DDTHH:MM")
- * @returns {Date} JSTとして解釈されたDateオブジェクト
- */
+// JST (+09:00) の Date オブジェクトを確実に生成
 function getJstTime(timeStr) {
-  // タイムゾーン情報がないT形式の時刻にZを付加してUTCとして解釈させる
-  // ブラウザのローカルタイムゾーンの影響を受けにくくする
+  // T形式の時刻にZを付加し、UTCとして解釈させることで、ローカルタイムゾーンの影響を回避
   return new Date(timeStr + "Z"); 
 }
 
 /**
- * JST 9:00 を基準にして、そのイベントが属する「日」を YYYY-MM-DD 形式で返す
- * @param {string} timeStr - イベント時刻 ("YYYY-MM-DDTHH:MM")
+ * 9時基準で時刻dが属する「日」を YYYY-MM-DD 形式で返す
+ * @param {Date} dt - JSTとして解釈されたDateオブジェクト
  * @returns {string} YYYY-MM-DD形式の日付文字列
  */
-function getJstDate(timeStr) {
-  const dt = getJstTime(timeStr);
-  // JSTの時刻を取得
-  const jstHours = dt.getUTCHours(); 
-  const jstDate = new Date(dt.getTime());
+function getJstDateString(dt) {
+  const JST_OFFSET_HOURS = 9;
   
-  // JST 0:00〜8:59 の場合、前日の日付として扱う
-  if(jstHours < 9) {
-    jstDate.setUTCDate(jstDate.getUTCDate() - 1);
-  }
-
-  // YYYY-MM-DD 形式で取得（UTCベースで取得）
-  return jstDate.toISOString().slice(0, 10);
+  // UTCの時刻を9時間ずらして、JST 9:00を日付の区切りとする
+  const baseDate = new Date(dt.getTime());
+  baseDate.setUTCHours(baseDate.getUTCHours() - JST_OFFSET_HOURS);
+  
+  // YYYY-MM-DD 形式で取得
+  return baseDate.toISOString().slice(0, 10);
 }
 
 /**
  * 9時基準で2つの時刻が同じ日かを判定
- * @param {Date} d1 - 基準時刻
- * @param {Date} d2 - 比較時刻
+ * @param {Date} d1 - 基準時刻（JST）
+ * @param {Date} d2 - 比較時刻（JST）
  * @returns {boolean} 同じ日なら true
  */
 function isSameJstDay(d1, d2) {
-    // 9時基準で日付をリセットした時刻を比較
-    const getBaseDate = (date) => {
-        const temp = new Date(date);
-        // JST 9:00 を基準にするために、一旦UTC時刻を9時間ずらす
-        temp.setUTCHours(temp.getUTCHours() - 9);
-        // 時刻情報をリセットし、日付部分だけを文字列化して比較
-        return temp.toISOString().slice(0, 10);
-    };
-    return getBaseDate(d1) === getBaseDate(d2);
+    return getJstDateString(d1) === getJstDateString(d2);
 }
 
-
 // --- イベント追加 ---
-function addEvent(el, name, timeStr){
-  if(clearedStages.includes(name)) return; // ステージ単位で非表示
+function addEvent(el, name, timeStart, isUpcoming){
+  // チェック済み（クリア済み）のステージは表示しない
+  if(clearedStages.includes(name)) return; 
   
   const li = document.createElement("li");
-  li.className = "event-item upcoming";
+  li.className = "event-item" + (isUpcoming ? " upcoming" : "");
   
-  const d = getJstTime(timeStr); 
+  // 終了時刻の計算 (イベント時間帯の表示)
+  let duration = DURATION_MS;
+  if(name.includes("バイソン") || name.includes("バルログ") || name.includes("サガット") || name.includes("ベガ")){
+      duration = 3 * 60 * 60 * 1000; // 超激ムズを含む4キャラは3時間と仮定
+  }
+  const timeEnd = new Date(timeStart.getTime() + duration);
   
-  // 時刻をJSTで表示するために UTC の時間を使用
-  const timeText = d.getUTCHours().toString().padStart(2,'0') + ":" + d.getUTCMinutes().toString().padStart(2,'0');
+  const formatTime = (d) => d.getUTCHours().toString().padStart(2,'0') + ":" + d.getUTCMinutes().toString().padStart(2,'0');
   
-  li.innerHTML = `<span class="event-time">${timeText}</span>${name} <input type="checkbox" class="check">`;
+  const timeText = formatTime(timeStart) + "～" + formatTime(timeEnd);
+  
+  li.innerHTML = `
+    <span class="event-time">${timeText}</span>
+    <span class="event-name">${name}</span>
+    <input type="checkbox" class="check" data-event-name="${name}">
+  `;
 
+  // チェックボックスにクリアステージ名を設定
   const checkbox = li.querySelector(".check");
-  // チェックボックスの初期状態を設定（クリア済みはチェック状態のまま）
-  checkbox.checked = clearedStages.includes(name); 
+  checkbox.checked = false; // 未クリアリストなので常にfalse
 
-  // チェックは即反映せず、反映ボタンで URL 更新 (変更なし)
+  // チェックは即反映せず、反映ボタンで URL 更新
   checkbox.addEventListener("change", ()=>{});
 
   el.appendChild(li);
@@ -169,75 +283,89 @@ function addEvent(el, name, timeStr){
 
 // --- レンダリング ---
 function render(){
-  todayEl.innerHTML=""; 
-  tomorrowEl.innerHTML=""; 
+  todayEl.innerHTML='<li class="event-item">本日開催予定の未クリアイベントはありません。</li>'; 
+  tomorrowEl.innerHTML='<li class="event-item">明日開催予定の未クリアイベントはありません。</li>'; 
   futureEl.innerHTML="";
 
-  const now = new Date(); // 現在時刻 (ローカルタイムゾーン)
-  
-  // 9時基準で日付を判定
-  const JST_OFFSET_MS = 9 * 60 * 60 * 1000;
-  
-  // 今日の9時（JST）を基準点とする
-  const todayStart = new Date(now.getTime() + JST_OFFSET_MS); // UTC時刻をJSTに変換
-  todayStart.setUTCHours(9, 0, 0, 0); // JST 9:00 に設定
-  todayStart.setTime(todayStart.getTime() - JST_OFFSET_MS); // ローカルタイムに戻す（UTC 0:00 に相当）
-
-  // 現在の9時基準の「今日」のDateオブジェクト（比較用）
-  const nowJst = new Date(now.getTime() + JST_OFFSET_MS); // JST
+  const nowJst = getJstTime(new Date().toISOString().slice(0, 16));
+  const todayStr = getJstDateString(nowJst);
   
   // 9時基準の「明日」のDateオブジェクト（比較用）
-  const tomorrowJst = new Date(nowJst);
-  tomorrowJst.setUTCDate(nowJst.getUTCDate() + 1);
+  const tomorrowJst = new Date(nowJst.getTime());
+  tomorrowJst.setUTCDate(tomorrowJst.getUTCDate() + 1);
+  const tomorrowStr = getJstDateString(tomorrowJst);
 
-  // 日付ごとにまとめる
-  let dateMap = {}; // Key: YYYY-MM-DD
+
+  // 全イベントをフラット化し、日付でグルーピング
+  let allEvents = [];
   events.forEach(ev => {
     ev.times.forEach(t => {
-      const d = getJstTime(t); // イベント時刻（JST）
-      const dateStr = getJstDate(t); // 9時基準の日付文字列
-      
-      if(!dateMap[dateStr]) dateMap[dateStr] = [];
-      dateMap[dateStr].push({name: ev.name, time: t, date: d});
+      const timeStart = getJstTime(t);
+      // 過去のイベント、またはクリア済みのステージは除外
+      if(timeStart.getTime() < nowJst.getTime() - DURATION_MS || clearedStages.includes(ev.name)) {
+        return;
+      }
+      allEvents.push({name: ev.name, time: t, date: timeStart, dateStr: getJstDateString(timeStart)});
     });
   });
+
+  // 日付ごとにイベントを分類し、ソート
+  let dateMap = {};
+  allEvents.forEach(ev => {
+    if(!dateMap[ev.dateStr]) dateMap[ev.dateStr] = [];
+    dateMap[ev.dateStr].push(ev);
+  });
+  
+  // ソート処理: 現在時刻に近い順（時間が古い順）にソート
+  // 今日、明日、明後日以降のリストでもこのソートが適用される
+  Object.keys(dateMap).forEach(date => {
+      dateMap[date].sort((a,b)=>a.date.getTime() - b.date.getTime());
+  });
+
+
+  let isTodayEmpty = true;
+  let isTomorrowEmpty = true;
 
   // 分類と表示
   Object.keys(dateMap).sort().forEach(dateStr => {
       const eventList = dateMap[dateStr];
-      const firstEventDate = eventList[0].date; // 分類用のDateオブジェクト
+      const firstEventDate = eventList[0].date;
 
-      let targetEl = futureEl;
-      let titleText = dateStr;
-
-      if(isSameJstDay(firstEventDate, nowJst)){
+      let targetEl;
+      
+      if(dateStr === todayStr){
           // 今日
           targetEl = todayEl;
-      } else if (isSameJstDay(firstEventDate, tomorrowJst)){
+          if(isTodayEmpty) targetEl.innerHTML = ""; // プレースホルダーを削除
+          isTodayEmpty = false;
+      } else if (dateStr === tomorrowStr){
           // 明日
           targetEl = tomorrowEl;
-      } 
-      
-      // 明後日以降は、日付ごとに ul を作成してfutureElに追加
-      if (targetEl === futureEl) {
-        const div = document.createElement("div");
-        const title = document.createElement("h3");
-        title.textContent = dateStr;
-        div.appendChild(title);
-
-        const ul = document.createElement("ul"); ul.className="event-list";
-        
-        eventList.sort((a,b)=>a.date - b.date)
-                 .forEach(ev=>addEvent(ul, ev.name, ev.time));
-
-        div.appendChild(ul);
-        futureEl.appendChild(div);
-
+          if(isTomorrowEmpty) targetEl.innerHTML = ""; // プレースホルダーを削除
+          isTomorrowEmpty = false;
       } else {
-        // 今日・明日は ul に直接追加
-        eventList.sort((a,b)=>a.date - b.date)
-                 .forEach(ev=>addEvent(targetEl, ev.name, ev.time));
+          // 明後日以降
+          targetEl = futureEl;
+
+          const div = document.createElement("div");
+          const title = document.createElement("h3");
+          title.textContent = dateStr;
+          div.appendChild(title);
+
+          const ul = document.createElement("ul"); ul.className="event-list";
+          
+          eventList.forEach(ev=>addEvent(ul, ev.name, ev.date, true)); // 明後日以降は全てUpcoming
+          
+          div.appendChild(ul);
+          futureEl.appendChild(div);
+          return;
       }
+      
+      // 今日・明日は ul に直接追加
+      eventList.forEach(ev=>{
+          const isUpcoming = ev.date.getTime() >= nowJst.getTime();
+          addEvent(targetEl, ev.name, ev.date, isUpcoming);
+      });
   });
 
   renderClearedList();
@@ -250,14 +378,15 @@ function renderClearedList(){
     clearedEl.textContent="なし"; 
     return;
   }
-  // (以降、変更なし)
   const ul = document.createElement("ul"); ul.className="event-list";
   clearedStages.forEach(name=>{
     const li = document.createElement("li");
+    li.className = "event-item";
     li.innerHTML = `${name} <button class="remove">×</button>`;
     li.querySelector(".remove").addEventListener("click", ()=> {
       clearedStages = clearedStages.filter(x=>x!==name);
-      render();
+      // クリア済みリストから削除したら、URLを更新して再レンダリングを促す
+      document.getElementById("update-url").click(); 
     });
     ul.appendChild(li);
   });
@@ -267,36 +396,38 @@ function renderClearedList(){
 // --- ボタン ---
 document.getElementById("update-url").addEventListener("click", ()=> {
   const newCleared = [];
+  
+  // 今表示されている未クリアリストでチェックされたステージ名を取得
   document.querySelectorAll(".check:checked").forEach(cb=>{
-    // nameの取得方法を修正（チェックボックスから離れた親要素から名前を取得する必要があるため）
-    const listItem = cb.closest('.event-item');
-    if (listItem) {
-        // イベント名を取得するために、時刻とチェックボックスのテキストを除外してトリム
-        const timeText = listItem.querySelector('.event-time').textContent;
-        let name = listItem.textContent.replace(timeText, '').replace(/×$/, '').trim();
-        // チェックボックスの文字も消す
-        name = name.substring(0, name.length - 1).trim(); 
-        if(!newCleared.includes(name)) newCleared.push(name);
-    }
+    const name = cb.getAttribute('data-event-name');
+    if(name && !newCleared.includes(name)) newCleared.push(name);
   });
-
-  // URLパラメータ更新のロジックを修正
-  // 現在のclearedStagesと新しいnewClearedをマージし、重複を排除
-  clearedStages = Array.from(new Set([...clearedStages, ...newCleared]));
+  
+  // 既存のクリア済みステージと今回チェックされたステージをマージ
+  let updatedClearedStages = Array.from(new Set([...clearedStages, ...newCleared]));
 
   const params = new URLSearchParams();
-  if(clearedStages.length>0) params.set("cleared", clearedStages.join(","));
+  if(updatedClearedStages.length>0) {
+    // 常にソートしてURLをきれいに保つ
+    updatedClearedStages.sort();
+    params.set("cleared", updatedClearedStages.join(","));
+  }
+  
+  // URLのクリア済みパラメータを更新し、ページをリロードして再レンダリング
   window.location.search=params.toString();
 });
 
 document.getElementById("copy-url").addEventListener("click", ()=> {
-  navigator.clipboard.writeText(window.location.href).then(()=>alert("URLをコピーしました！"));
+  navigator.clipboard.writeText(window.location.href).then(()=>alert("クリア状況を保存したURLをコピーしました！"));
 });
 
-document.getElementById("show-cleared").addEventListener("click", ()=> {
-  clearedEl.style.display = clearedEl.style.display==="none" ? "block" : "none";
+document.getElementById("show-cleared").addEventListener("click", (e)=> {
+  const isHidden = clearedEl.style.display==="none" || clearedEl.style.display==="";
+  clearedEl.style.display = isHidden ? "block" : "none";
+  e.target.textContent = isHidden ? '🙈 クリア済みを隠す' : '👁️ クリア済みを見る';
 });
 
+// 初回実行
 render();
 </script>
 </body>
