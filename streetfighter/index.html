@@ -165,7 +165,6 @@ button:hover {
 </section>
 
 <script>
-// イベントデータ: 2時間スパンを想定
 const events =[
   {name: "VSリュウ 初級", times:["2025-10-05T12:00","2025-10-06T03:00","2025-10-11T18:00","2025-10-13T12:00","2025-10-17T00:00","2025-10-19T12:00","2025-10-20T03:00"]},
   {name: "VSリュウ 激ムズ", times:["2025-10-04T18:00","2025-10-06T12:00","2025-10-10T12:00","2025-10-12T00:00","2025-10-13T21:00","2025-10-18T18:00"]},
@@ -201,43 +200,36 @@ const events =[
   {name: "VSジュリ 激ムズ", times:["2025-10-03T21:00","2025-10-05T09:00","2025-10-07T21:00","2025-10-11T03:00","2025-10-14T18:00","2025-10-17T21:00","2025-10-19T09:00"]}
 ];
 
-// イベントの開催時間を2時間と仮定 (VSバイソン・バルログ・サガット・ベガは3時間と仮定)
 const DURATION_MS = 2 * 60 * 60 * 1000; 
 
-// --- クリア済み管理（URLから） ---
 let urlParams = new URLSearchParams(window.location.search);
 let clearedStages = urlParams.get("cleared") ? urlParams.get("cleared").split(",") : [];
 
-// --- DOM参照 ---
 const todayEl = document.getElementById("today");
 const tomorrowEl = document.getElementById("tomorrow");
 const futureEl = document.getElementById("future");
 const clearedEl = document.getElementById("cleared-list");
 
-// JST (+09:00) の Date オブジェクトを確実に生成
 function getJstTime(timeStr) {
-  // T形式の時刻にZを付加し、UTCとして解釈させることで、ローカルタイムゾーンの影響を回避
   return new Date(timeStr + "Z"); 
 }
 
 /**
- * 9時基準で時刻dが属する「日」を YYYY-MM-DD 形式で返す
+ * 時刻dが属する「日」を YYYY-MM-DD 形式で返す (0:00基準)
  * @param {Date} dt - JSTとして解釈されたDateオブジェクト
  * @returns {string} YYYY-MM-DD形式の日付文字列
  */
 function getJstDateString(dt) {
-  const JST_OFFSET_HOURS = 0;
-  
-  // UTCの時刻を9時間ずらして、JST 9:00を日付の区切りとする
   const baseDate = new Date(dt.getTime());
-  baseDate.setUTCHours(baseDate.getUTCHours() - JST_OFFSET_HOURS);
   
-  // YYYY-MM-DD 形式で取得
+  // 9時基準の調整ロジックを削除し、0:00基準（標準のUTC日付）を使用
+  // baseDate.setUTCHours(baseDate.getUTCHours() - JST_OFFSET_HOURS);
+  
   return baseDate.toISOString().slice(0, 10);
 }
 
 /**
- * 9時基準で2つの時刻が同じ日かを判定
+ * 2つの時刻が同じ日かを判定 (0:00基準)
  * @param {Date} d1 - 基準時刻（JST）
  * @param {Date} d2 - 比較時刻（JST）
  * @returns {boolean} 同じ日なら true
@@ -246,9 +238,7 @@ function isSameJstDay(d1, d2) {
     return getJstDateString(d1) === getJstDateString(d2);
 }
 
-// --- イベント追加 ---
 function addEvent(el, name, timeStart, isUpcoming){
-  // チェック済み（クリア済み）のステージは表示しない
   if(clearedStages.includes(name)) return; 
   
   const li = document.createElement("li");
@@ -256,9 +246,12 @@ function addEvent(el, name, timeStart, isUpcoming){
   
   // 終了時刻の計算 (イベント時間帯の表示)
   let duration = DURATION_MS;
+  // 3時間設定の個別処理を削除
+  /*
   if(name.includes("") || name.includes("") || name.includes("") || name.includes("")){
-      duration = 3 * 60 * 60 * 1000; // 超激ムズを含む4キャラは3時間と仮定
+      duration = 3 * 60 * 60 * 1000;
   }
+  */
   const timeEnd = new Date(timeStart.getTime() + duration);
   
   const formatTime = (d) => d.getUTCHours().toString().padStart(2,'0') + ":" + d.getUTCMinutes().toString().padStart(2,'0');
@@ -271,17 +264,14 @@ function addEvent(el, name, timeStart, isUpcoming){
     <input type="checkbox" class="check" data-event-name="${name}">
   `;
 
-  // チェックボックスにクリアステージ名を設定
   const checkbox = li.querySelector(".check");
-  checkbox.checked = false; // 未クリアリストなので常にfalse
+  checkbox.checked = false;
 
-  // チェックは即反映せず、反映ボタンで URL 更新
   checkbox.addEventListener("change", ()=>{});
 
   el.appendChild(li);
 }
 
-// --- レンダリング ---
 function render(){
   todayEl.innerHTML='<li class="event-item">本日開催予定の未クリアイベントはありません。</li>'; 
   tomorrowEl.innerHTML='<li class="event-item">明日開催予定の未クリアイベントはありません。</li>'; 
@@ -290,7 +280,7 @@ function render(){
   const nowJst = getJstTime(new Date().toISOString().slice(0, 16));
   const todayStr = getJstDateString(nowJst);
   
-  // 9時基準の「明日」のDateオブジェクト（比較用）
+  // 0:00基準の「明日」のDateオブジェクト（比較用）
   const tomorrowJst = new Date(nowJst.getTime());
   tomorrowJst.setUTCDate(tomorrowJst.getUTCDate() + 1);
   const tomorrowStr = getJstDateString(tomorrowJst);
@@ -317,7 +307,6 @@ function render(){
   });
   
   // ソート処理: 現在時刻に近い順（時間が古い順）にソート
-  // 今日、明日、明後日以降のリストでもこのソートが適用される
   Object.keys(dateMap).forEach(date => {
       dateMap[date].sort((a,b)=>a.date.getTime() - b.date.getTime());
   });
@@ -336,12 +325,12 @@ function render(){
       if(dateStr === todayStr){
           // 今日
           targetEl = todayEl;
-          if(isTodayEmpty) targetEl.innerHTML = ""; // プレースホルダーを削除
+          if(isTodayEmpty) targetEl.innerHTML = "";
           isTodayEmpty = false;
       } else if (dateStr === tomorrowStr){
           // 明日
           targetEl = tomorrowEl;
-          if(isTomorrowEmpty) targetEl.innerHTML = ""; // プレースホルダーを削除
+          if(isTomorrowEmpty) targetEl.innerHTML = "";
           isTomorrowEmpty = false;
       } else {
           // 明後日以降
@@ -354,7 +343,7 @@ function render(){
 
           const ul = document.createElement("ul"); ul.className="event-list";
           
-          eventList.forEach(ev=>addEvent(ul, ev.name, ev.date, true)); // 明後日以降は全てUpcoming
+          eventList.forEach(ev=>addEvent(ul, ev.name, ev.date, true));
           
           div.appendChild(ul);
           futureEl.appendChild(div);
@@ -371,7 +360,6 @@ function render(){
   renderClearedList();
 }
 
-// --- クリア済みリスト ---
 function renderClearedList(){
   clearedEl.innerHTML="";
   if(clearedStages.length===0){ 
@@ -393,7 +381,6 @@ function renderClearedList(){
   clearedEl.appendChild(ul);
 }
 
-// --- ボタン ---
 document.getElementById("update-url").addEventListener("click", ()=> {
   const newCleared = [];
   
