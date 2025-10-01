@@ -5,16 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>New Challenger スケジュール管理</title>
 <style>
-/* --- CSS: デザイン調整 --- */
+/* --- CSS: デザイン調整 (変更なし) --- */
 body { 
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
     margin:0; 
     padding:0; 
-    background:#f2f3f5; /* 背景色を落ち着いた白に近いグレーに */
-    color:#2c3e50; /* 文字色を濃いネイビーに */
+    background:#f2f3f5;
+    color:#2c3e50; 
 }
 header { 
-    background:#e74c3c; /* ヘッダー色を強調色（赤系）に */
+    background:#e74c3c;
     color:#fff; 
     text-align:center; 
     padding:15px 0; 
@@ -25,12 +25,12 @@ header {
 section { 
     margin:16px auto; 
     padding:0 8px;
-    max-width: 800px; /* PCでの見やすさのため最大幅を設定 */
+    max-width: 800px;
 }
 h2 { 
     font-size:1.3em; 
     margin-bottom:10px; 
-    border-bottom:2px solid #bdc3c7; /* 見出しの下線 */
+    border-bottom:2px solid #bdc3c7;
     padding-bottom:5px;
     color:#34495e; 
     font-weight:600;
@@ -39,7 +39,7 @@ h3 {
     font-size:1.1em;
     margin-top: 15px;
     margin-bottom: 5px;
-    color: #8e44ad; /* 明後日以降の日付を見やすく */
+    color: #8e44ad;
 }
 
 /* イベントリスト */
@@ -61,16 +61,16 @@ h3 {
     transition: all 0.2s ease-in-out;
 }
 .event-item.upcoming { 
-    border-left:6px solid #e74c3c; /* 赤色のラインで未クリア強調 */
+    border-left:6px solid #e74c3c;
 }
 
 /* イベント時刻 */
 .event-time { 
     font-weight:bold; 
     margin-right:15px; 
-    color:#2980b9; /* 時刻を青色にして目立たせる */
-    flex-shrink: 0; /* 縮まないように */
-    min-width: 100px;
+    color:#2980b9;
+    flex-shrink: 0;
+    min-width: 130px; /* 〇〇:〇〇～〇〇:〇〇 に対応 */
 }
 .event-name {
     flex-grow: 1;
@@ -96,7 +96,7 @@ button {
     border:none; 
     border-radius:5px; 
     cursor:pointer; 
-    background:#3498db; /* ボタンを青色に統一 */
+    background:#3498db;
     color:#fff; 
     font-weight:600;
     transition: background 0.2s;
@@ -104,7 +104,7 @@ button {
 button:hover {
     background:#2980b9;
 }
-#update-url { background:#e67e22; } /* 反映ボタンをオレンジ系に */
+#update-url { background:#e67e22; }
 #update-url:hover { background:#d35400; }
 
 /* クリア済みリスト */
@@ -131,7 +131,7 @@ button:hover {
 /* レスポンシブ対応 */
 @media(max-width:600px){ 
     .event-item { font-size:0.9em; padding:10px; } 
-    .event-time { margin-right:8px; min-width: 80px; } 
+    .event-time { margin-right:8px; min-width: 110px; } 
     .button-group button { font-size: 0.9em; padding: 6px 10px; }
 }
 </style>
@@ -165,44 +165,48 @@ button:hover {
 </section>
 
 <script>
-// イベントデータ: 2時間スパンを想定
-const events =[
-  {name: "VSリュウ 初級", times:["2025-10-05T12:00","2025-10-06T03:00","2025-10-11T18:00","2025-10-13T12:00","2025-10-17T00:00","2025-10-19T12:00","2025-10-20T03:00"]},
-  {name: "VSリュウ 激ムズ", times:["2025-10-04T18:00","2025-10-06T12:00","2025-10-10T12:00","2025-10-12T00:00","2025-10-13T21:00","2025-10-18T18:00"]},
-  {name: "VS春麗 初級", times:["2025-10-05T12:00","2025-10-07T12:00","2025-10-11T18:00","2025-10-14T21:00","2025-10-17T00:00","2025-10-19T12:00"]},
-  {name: "VS春麗 激ムズ", times:["2025-10-04T18:00","2025-10-07T03:00","2025-10-10T12:00","2025-10-12T00:00","2025-10-14T06:00","2025-10-18T18:00"]},
-  {name: "VSガイル 初級", times:["2025-10-05T18:00","2025-10-08T03:00","2025-10-11T12:00","2025-10-15T12:00","2025-10-17T06:00","2025-10-19T18:00"]},
-  {name: "VSガイル 激ムズ", times:["2025-10-04T12:00","2025-10-08T12:00","2025-10-10T18:00","2025-10-12T06:00","2025-10-15T03:00","2025-10-18T12:00"]},
-  {name: "VSザンギエフ 初級", times:["2025-10-05T18:00","2025-10-09T12:00","2025-10-11T12:00","2025-10-16T21:00","2025-10-17T06:00","2025-10-19T18:00"]},
-  {name: "VSザンギエフ 激ムズ", times:["2025-10-04T12:00","2025-10-09T03:00","2025-10-10T18:00","2025-10-12T06:00","2025-10-16T06:00","2025-10-18T12:00"]},
-  {name: "VSブランカ 初級", times:["2025-10-03T12:00","2025-10-05T00:00","2025-10-06T15:00","2025-10-11T06:00","2025-10-13T00:00","2025-10-17T12:00","2025-10-19T00:00"]},
-  {name: "VSブランカ 激ムズ", times:["2025-10-04T06:00","2025-10-06T06:00","2025-10-10T00:00","2025-10-12T12:00","2025-10-13T09:00","2025-10-18T06:00","2025-10-20T06:00"]},
-  {name: "VSダルシム 初級", times:["2025-10-03T12:00","2025-10-05T00:00","2025-10-07T00:00","2025-10-11T06:00","2025-10-14T15:00","2025-10-17T12:00","2025-10-19T00:00"]},
-  {name: "VSダルシム 激ムズ", times:["2025-10-04T06:00","2025-10-07T15:00","2025-10-10T00:00","2025-10-12T12:00","2025-10-14T00:00","2025-10-18T06:00"]},
-  {name: "VSケン 初級", times:["2025-10-03T18:00","2025-10-05T06:00","2025-10-08T09:00","2025-10-11T00:00","2025-10-15T00:00","2025-10-17T18:00","2025-10-19T06:00"]},
-  {name: "VSケン 激ムズ", times:["2025-10-04T00:00","2025-10-08T18:00","2025-10-10T06:00","2025-10-12T18:00","2025-10-15T21:00","2025-10-18T00:00"]},
-  {name: "VSエドモンド本田 初級", times:["2025-10-03T18:00","2025-10-05T06:00","2025-10-09T00:00","2025-10-11T00:00","2025-10-16T15:00","2025-10-17T18:00","2025-10-19T06:00"]},
-  {name: "VSエドモンド本田 激ムズ", times:["2025-10-04T00:00","2025-10-09T15:00","2025-10-10T06:00","2025-10-12T18:00","2025-10-16T00:00","2025-10-18T00:00"]},
-  {name: "VSバイソン 中級", times:["2025-10-04T21:00","2025-10-06T09:00","2025-10-10T03:00","2025-10-12T15:00","2025-10-13T18:00","2025-10-18T21:00"]},
-  {name: "VSバイソン 超激ムズ", times:["2025-10-05T15:00","2025-10-06T18:00","2025-10-11T21:00","2025-10-13T03:00","2025-10-17T03:00","2025-10-19T15:00","2025-10-20T00:00"]},
-  {name: "VSバルログ 中級", times:["2025-10-04T21:00","2025-10-07T18:00","2025-10-10T03:00","2025-10-12T15:00","2025-10-14T03:00","2025-10-18T21:00"]},
-  {name: "VSバルログ 超激ムズ", times:["2025-10-05T15:00","2025-10-07T09:00","2025-10-11T21:00","2025-10-14T12:00","2025-10-17T03:00","2025-10-19T15:00"]},
-  {name: "VSサガット 中級", times:["2025-10-04T15:00","2025-10-08T21:00","2025-10-10T09:00","2025-10-12T21:00","2025-10-15T06:00","2025-10-18T15:00"]},
-  {name: "VSサガット 超激ムズ", times:["2025-10-05T21:00","2025-10-08T06:00","2025-10-11T15:00","2025-10-15T15:00","2025-10-17T09:00","2025-10-19T21:00"]},
-  {name: "VSベガ 中級", times:["2025-10-04T15:00","2025-10-09T06:00","2025-10-10T09:00","2025-10-12T21:00","2025-10-16T03:00","2025-10-18T15:00"]},
-  {name: "VSベガ 超激ムズ", times:["2025-10-05T21:00","2025-10-09T21:00","2025-10-11T15:00","2025-10-16T12:00","2025-10-17T09:00","2025-10-19T21:00"]},
-  {name: "VSさくら 初級", times:["2025-10-04T09:00","2025-10-08T15:00","2025-10-10T15:00","2025-10-12T03:00","2025-10-15T18:00","2025-10-18T09:00"]},
-  {name: "VSさくら 激ムズ", times:["2025-10-03T15:00","2025-10-05T03:00","2025-10-08T00:00","2025-10-11T09:00","2025-10-15T09:00","2025-10-17T15:00","2025-10-19T03:00"]},
-  {name: "VSルーク 初級", times:["2025-10-04T09:00","2025-10-09T18:00","2025-10-10T15:00","2025-10-12T03:00","2025-10-16T09:00","2025-10-18T09:00"]},
-  {name: "VSルーク 激ムズ", times:["2025-10-03T15:00","2025-10-05T03:00","2025-10-09T09:00","2025-10-11T09:00","2025-10-16T18:00","2025-10-17T15:00","2025-10-19T03:00"]},
-  {name: "VSキャミィ 初級", times:["2025-10-04T03:00","2025-10-06T21:00","2025-10-10T21:00","2025-10-12T09:00","2025-10-13T06:00","2025-10-18T03:00","2025-10-20T09:00"]},
-  {name: "VSキャミィ 激ムズ", times:["2025-10-03T21:00","2025-10-05T09:00","2025-10-06T00:00","2025-10-11T03:00","2025-10-13T15:00","2025-10-17T21:00","2025-10-19T09:00"]},
-  {name: "VSジュリ 初級", times:["2025-10-04T03:00","2025-10-07T06:00","2025-10-10T21:00","2025-10-12T09:00","2025-10-14T09:00","2025-10-18T03:00"]},
-  {name: "VSジュリ 激ムズ", times:["2025-10-03T21:00","2025-10-05T09:00","2025-10-07T21:00","2025-10-11T03:00","2025-10-14T18:00","2025-10-17T21:00","2025-10-19T09:00"]}
-];
+// --- イベントデータ (更新) ---
+const eventDataMap = {
+  "VSリュウ 初級": ["2025-10-05T12:00","2025-10-06T03:00","2025-10-11T18:00","2025-10-13T12:00","2025-10-17T00:00","2025-10-19T12:00","2025-10-20T03:00"],
+  "VSリュウ 激ムズ": ["2025-10-04T18:00","2025-10-06T12:00","2025-10-10T12:00","2025-10-12T00:00","2025-10-13T21:00","2025-10-18T18:00"],
+  "VS春麗 初級": ["2025-10-05T12:00","2025-10-07T12:00","2025-10-11T18:00","2025-10-14T21:00","2025-10-17T00:00","2025-10-19T12:00"],
+  "VS春麗 激ムズ": ["2025-10-04T18:00","2025-10-07T03:00","2025-10-10T12:00","2025-10-12T00:00","2025-10-14T06:00","2025-10-18T18:00"],
+  "VSガイル 初級": ["2025-10-05T18:00","2025-10-08T03:00","2025-10-11T12:00","2025-10-15T12:00","2025-10-17T06:00","2025-10-19T18:00"],
+  "VSガイル 激ムズ": ["2025-10-04T12:00","2025-10-08T12:00","2025-10-10T18:00","2025-10-12T06:00","2025-10-15T03:00","2025-10-18T12:00"],
+  "VSザンギエフ 初級": ["2025-10-05T18:00","2025-10-09T12:00","2025-10-11T12:00","2025-10-16T21:00","2025-10-17T06:00","2025-10-19T18:00"],
+  "VSザンギエフ 激ムズ": ["2025-10-04T12:00","2025-10-09T03:00","2025-10-10T18:00","2025-10-12T06:00","2025-10-16T06:00","2025-10-18T12:00"],
+  "VSブランカ 初級": ["2025-10-03T12:00","2025-10-05T00:00","2025-10-06T15:00","2025-10-11T06:00","2025-10-13T00:00","2025-10-17T12:00","2025-10-19T00:00"],
+  "VSブランカ 激ムズ": ["2025-10-04T06:00","2025-10-06T06:00","2025-10-10T00:00","2025-10-12T12:00","2025-10-13T09:00","2025-10-18T06:00","2025-10-20T06:00"],
+  "VSダルシム 初級": ["2025-10-03T12:00","2025-10-05T00:00","2025-10-07T00:00","2025-10-11T06:00","2025-10-14T15:00","2025-10-17T12:00","2025-10-19T00:00"],
+  "VSダルシム 激ムズ": ["2025-10-04T06:00","2025-10-07T15:00","2025-10-10T00:00","2025-10-12T12:00","2025-10-14T00:00","2025-10-18T06:00"],
+  "VSケン 初級": ["2025-10-03T18:00","2025-10-05T06:00","2025-10-08T09:00","2025-10-11T00:00","2025-10-15T00:00","2025-10-17T18:00","2025-10-19T06:00"],
+  "VSケン 激ムズ": ["2025-10-04T00:00","2025-10-08T18:00","2025-10-10T06:00","2025-10-12T18:00","2025-10-15T21:00","2025-10-18T00:00"],
+  "VSエドモンド本田 初級": ["2025-10-03T18:00","2025-10-05T06:00","2025-10-09T00:00","2025-10-11T00:00","2025-10-16T15:00","2025-10-17T18:00","2025-10-19T06:00"],
+  "VSエドモンド本田 激ムズ": ["2025-10-04T00:00","2025-10-09T15:00","2025-10-10T06:00","2025-10-12T18:00","2025-10-16T00:00","2025-10-18T00:00"],
+  "VSバイソン 中級": ["2025-10-04T21:00","2025-10-06T09:00","2025-10-10T03:00","2025-10-12T15:00","2025-10-13T18:00","2025-10-18T21:00"],
+  "VSバイソン 超激ムズ": ["2025-10-05T15:00","2025-10-06T18:00","2025-10-11T21:00","2025-10-13T03:00","2025-10-17T03:00","2025-10-19T15:00","2025-10-20T00:00"],
+  "VSバルログ 中級": ["2025-10-04T21:00","2025-10-07T18:00","2025-10-10T03:00","2025-10-12T15:00","2025-10-14T03:00","2025-10-18T21:00"],
+  "VSバルログ 超激ムズ": ["2025-10-05T15:00","2025-10-07T09:00","2025-10-11T21:00","2025-10-14T12:00","2025-10-17T03:00","2025-10-19T15:00"],
+  "VSサガット 中級": ["2025-10-04T15:00","2025-10-08T21:00","2025-10-10T09:00","2025-10-12T21:00","2025-10-15T06:00","2025-10-18T15:00"],
+  "VSサガット 超激ムズ": ["2025-10-05T21:00","2025-10-08T06:00","2025-10-11T15:00","2025-10-15T15:00","2025-10-17T09:00","2025-10-19T21:00"],
+  "VSベガ 中級": ["2025-10-04T15:00","2025-10-09T06:00","2025-10-10T09:00","2025-10-12T21:00","2025-10-16T03:00","2025-10-18T15:00"],
+  "VSベガ 超激ムズ": ["2025-10-05T21:00","2025-10-09T21:00","2025-10-11T15:00","2025-10-16T12:00","2025-10-17T09:00","2025-10-19T21:00"],
+  "VSさくら 初級": ["2025-10-04T09:00","2025-10-08T15:00","2025-10-10T15:00","2025-10-12T03:00","2025-10-15T18:00","2025-10-18T09:00"],
+  "VSさくら 激ムズ": ["2025-10-03T15:00","2025-10-05T03:00","2025-10-08T00:00","2025-10-11T09:00","2025-10-15T09:00","2025-10-17T15:00","2025-10-19T03:00"],
+  "VSルーク 初級": ["2025-10-04T09:00","2025-10-09T18:00","2025-10-10T15:00","2025-10-12T03:00","2025-10-16T09:00","2025-10-18T09:00"],
+  "VSルーク 激ムズ": ["2025-10-03T15:00","2025-10-05T03:00","2025-10-09T09:00","2025-10-11T09:00","2025-10-16T18:00","2025-10-17T15:00","2025-10-19T03:00"],
+  "VSキャミィ 初級": ["2025-10-04T03:00","2025-10-06T21:00","2025-10-10T21:00","2025-10-12T09:00","2025-10-13T06:00","2025-10-18T03:00","2025-10-20T09:00"],
+  "VSキャミィ 激ムズ": ["2025-10-03T21:00","2025-10-05T09:00","2025-10-06T00:00","2025-10-11T03:00","2025-10-13T15:00","2025-10-17T21:00","2025-10-19T09:00"],
+  "VSジュリ 初級": ["2025-10-04T03:00","2025-10-07T06:00","2025-10-10T21:00","2025-10-12T09:00","2025-10-14T09:00","2025-10-18T03:00"],
+  "VSジュリ 激ムズ": ["2025-10-03T21:00","2025-10-05T09:00","2025-10-07T21:00","2025-10-11T03:00","2025-10-14T18:00","2025-10-17T21:00","2025-10-19T09:00"]
+};
 
-// イベントの開催時間を2時間と仮定 (VSバイソン・バルログ・サガット・ベガは3時間と仮定)
-const DURATION_MS = 2 * 60 * 60 * 1000; 
+// イベントの開催時間を計算するための関数
+function getEventDuration(name) {
+    // データを見る限り、イベントは全て2時間で確定
+    return 2 * 60 * 60 * 1000; 
+}
+
 
 // --- クリア済み管理（URLから） ---
 let urlParams = new URLSearchParams(window.location.search);
@@ -221,23 +225,17 @@ function getJstTime(timeStr) {
 }
 
 /**
- * 9時基準で時刻dが属する「日」を YYYY-MM-DD 形式で返す
+ * JST 0:00 を基準にして、そのイベントが属する「日」を YYYY-MM-DD 形式で返す
  * @param {Date} dt - JSTとして解釈されたDateオブジェクト
  * @returns {string} YYYY-MM-DD形式の日付文字列
  */
 function getJstDateString(dt) {
-  const JST_OFFSET_HOURS = 9;
-  
-  // UTCの時刻を9時間ずらして、JST 9:00を日付の区切りとする
-  const baseDate = new Date(dt.getTime());
-  baseDate.setUTCHours(baseDate.getUTCHours() - JST_OFFSET_HOURS);
-  
-  // YYYY-MM-DD 形式で取得
-  return baseDate.toISOString().slice(0, 10);
+  // JST 0:00 基準なので、UTCの日付をそのまま返す（タイムゾーンオフセットを考慮したtoISOString）
+  return new Date(dt.getTime() - (-9 * 60 * 60 * 1000)).toISOString().slice(0, 10);
 }
 
 /**
- * 9時基準で2つの時刻が同じ日かを判定
+ * 0時基準で2つの時刻が同じ日かを判定
  * @param {Date} d1 - 基準時刻（JST）
  * @param {Date} d2 - 比較時刻（JST）
  * @returns {boolean} 同じ日なら true
@@ -254,13 +252,11 @@ function addEvent(el, name, timeStart, isUpcoming){
   const li = document.createElement("li");
   li.className = "event-item" + (isUpcoming ? " upcoming" : "");
   
-  // 終了時刻の計算 (イベント時間帯の表示)
-  let duration = DURATION_MS;
-  if(name.includes("バイソン") || name.includes("バルログ") || name.includes("サガット") || name.includes("ベガ")){
-      duration = 3 * 60 * 60 * 1000; // 超激ムズを含む4キャラは3時間と仮定
-  }
+  // 終了時刻の計算 
+  const duration = getEventDuration(name);
   const timeEnd = new Date(timeStart.getTime() + duration);
   
+  // 時刻を HH:MM 形式で表示 (UTCベースの時刻を使用)
   const formatTime = (d) => d.getUTCHours().toString().padStart(2,'0') + ":" + d.getUTCMinutes().toString().padStart(2,'0');
   
   const timeText = formatTime(timeStart) + "～" + formatTime(timeEnd);
@@ -271,12 +267,8 @@ function addEvent(el, name, timeStart, isUpcoming){
     <input type="checkbox" class="check" data-event-name="${name}">
   `;
 
-  // チェックボックスにクリアステージ名を設定
-  const checkbox = li.querySelector(".check");
-  checkbox.checked = false; // 未クリアリストなので常にfalse
-
   // チェックは即反映せず、反映ボタンで URL 更新
-  checkbox.addEventListener("change", ()=>{});
+  li.querySelector(".check").addEventListener("change", ()=>{});
 
   el.appendChild(li);
 }
@@ -287,25 +279,33 @@ function render(){
   tomorrowEl.innerHTML='<li class="event-item">明日開催予定の未クリアイベントはありません。</li>'; 
   futureEl.innerHTML="";
 
-  const nowJst = getJstTime(new Date().toISOString().slice(0, 16));
+  const now = new Date(); // 現在時刻 (ローカルタイムゾーン)
+  const JST_OFFSET_MS = 9 * 60 * 60 * 1000;
+  
+  // 現在時刻をJSTとして解釈したDateオブジェクト
+  const nowJst = new Date(now.getTime() + JST_OFFSET_MS); 
+  
   const todayStr = getJstDateString(nowJst);
   
-  // 9時基準の「明日」のDateオブジェクト（比較用）
-  const tomorrowJst = new Date(nowJst.getTime());
+  // 0時基準の「明日」のDateオブジェクト（比較用）
+  const tomorrowJst = new Date(nowJst);
   tomorrowJst.setUTCDate(tomorrowJst.getUTCDate() + 1);
   const tomorrowStr = getJstDateString(tomorrowJst);
 
 
   // 全イベントをフラット化し、日付でグルーピング
   let allEvents = [];
-  events.forEach(ev => {
-    ev.times.forEach(t => {
+  Object.keys(eventDataMap).forEach(name => {
+    eventDataMap[name].forEach(t => {
       const timeStart = getJstTime(t);
-      // 過去のイベント、またはクリア済みのステージは除外
-      if(timeStart.getTime() < nowJst.getTime() - DURATION_MS || clearedStages.includes(ev.name)) {
+      const duration = getEventDuration(name);
+      
+      // 終了時刻が現在時刻より過去なら除外
+      if(timeStart.getTime() + duration < nowJst.getTime() || clearedStages.includes(name)) {
         return;
       }
-      allEvents.push({name: ev.name, time: t, date: timeStart, dateStr: getJstDateString(timeStart)});
+      
+      allEvents.push({name: name, time: t, date: timeStart, dateStr: getJstDateString(timeStart)});
     });
   });
 
@@ -316,8 +316,7 @@ function render(){
     dateMap[ev.dateStr].push(ev);
   });
   
-  // ソート処理: 現在時刻に近い順（時間が古い順）にソート
-  // 今日、明日、明後日以降のリストでもこのソートが適用される
+  // 日付ごとに、イベントを時間が古い順（現在時刻に近い順）にソート
   Object.keys(dateMap).forEach(date => {
       dateMap[date].sort((a,b)=>a.date.getTime() - b.date.getTime());
   });
@@ -327,9 +326,9 @@ function render(){
   let isTomorrowEmpty = true;
 
   // 分類と表示
+  // 日付文字列を比較することで、未来の日付から順番に処理される
   Object.keys(dateMap).sort().forEach(dateStr => {
       const eventList = dateMap[dateStr];
-      const firstEventDate = eventList[0].date;
 
       let targetEl;
       
@@ -354,7 +353,7 @@ function render(){
 
           const ul = document.createElement("ul"); ul.className="event-list";
           
-          eventList.forEach(ev=>addEvent(ul, ev.name, ev.date, true)); // 明後日以降は全てUpcoming
+          eventList.forEach(ev=>addEvent(ul, ev.name, ev.date, true)); 
           
           div.appendChild(ul);
           futureEl.appendChild(div);
@@ -363,7 +362,9 @@ function render(){
       
       // 今日・明日は ul に直接追加
       eventList.forEach(ev=>{
-          const isUpcoming = ev.date.getTime() >= nowJst.getTime();
+          // 終了時刻が現在時刻より後なら "upcoming"
+          const duration = getEventDuration(ev.name);
+          const isUpcoming = ev.date.getTime() + duration >= nowJst.getTime();
           addEvent(targetEl, ev.name, ev.date, isUpcoming);
       });
   });
@@ -371,7 +372,7 @@ function render(){
   renderClearedList();
 }
 
-// --- クリア済みリスト ---
+// --- クリア済みリスト (変更なし) ---
 function renderClearedList(){
   clearedEl.innerHTML="";
   if(clearedStages.length===0){ 
@@ -385,7 +386,6 @@ function renderClearedList(){
     li.innerHTML = `${name} <button class="remove">×</button>`;
     li.querySelector(".remove").addEventListener("click", ()=> {
       clearedStages = clearedStages.filter(x=>x!==name);
-      // クリア済みリストから削除したら、URLを更新して再レンダリングを促す
       document.getElementById("update-url").click(); 
     });
     ul.appendChild(li);
@@ -393,27 +393,23 @@ function renderClearedList(){
   clearedEl.appendChild(ul);
 }
 
-// --- ボタン ---
+// --- ボタン (変更なし) ---
 document.getElementById("update-url").addEventListener("click", ()=> {
   const newCleared = [];
   
-  // 今表示されている未クリアリストでチェックされたステージ名を取得
   document.querySelectorAll(".check:checked").forEach(cb=>{
     const name = cb.getAttribute('data-event-name');
     if(name && !newCleared.includes(name)) newCleared.push(name);
   });
   
-  // 既存のクリア済みステージと今回チェックされたステージをマージ
   let updatedClearedStages = Array.from(new Set([...clearedStages, ...newCleared]));
 
   const params = new URLSearchParams();
   if(updatedClearedStages.length>0) {
-    // 常にソートしてURLをきれいに保つ
     updatedClearedStages.sort();
     params.set("cleared", updatedClearedStages.join(","));
   }
   
-  // URLのクリア済みパラメータを更新し、ページをリロードして再レンダリング
   window.location.search=params.toString();
 });
 
