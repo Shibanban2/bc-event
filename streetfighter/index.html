@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>New Challenger スケジュール</title>
 <style>
+/* CSSは変更なし */
 body { font-family: Arial, sans-serif; margin:0; padding:0; background:#f9f9f9; color:#333; }
 header { background:#ff5555; color:#fff; text-align:center; padding:12px 0; font-size:1.5em; font-weight:bold; }
 section { margin:16px; }
@@ -46,7 +47,8 @@ button { margin:4px 0; padding:6px 10px; border:none; border-radius:4px; cursor:
 </section>
 
 <script>
-const events =[
+const events = [
+  // イベントデータは変更なし
   {name: "VSリュウ 初級", times:["2025-10-05T12:00","2025-10-06T03:00","2025-10-11T18:00","2025-10-13T12:00","2025-10-17T00:00","2025-10-19T12:00","2025-10-20T03:00"]},
   {name: "VSリュウ 激ムズ", times:["2025-10-04T18:00","2025-10-06T12:00","2025-10-10T12:00","2025-10-12T00:00","2025-10-13T21:00","2025-10-18T18:00"]},
   {name: "VS春麗 初級", times:["2025-10-05T12:00","2025-10-07T12:00","2025-10-11T18:00","2025-10-14T21:00","2025-10-17T00:00","2025-10-19T12:00"]},
@@ -91,26 +93,75 @@ const tomorrowEl = document.getElementById("tomorrow");
 const futureEl = document.getElementById("future");
 const clearedEl = document.getElementById("cleared-list");
 
-// --- 日付判定: JST 9:00～翌8:59を同じ日扱い ---
-function getJstDate(d){
-  let dt = new Date(d + "+09:00");
-  if(dt.getHours() < 9) dt.setDate(dt.getDate() - 1);
-  return dt.toISOString().slice(0,10);
+/**
+ * イベント時刻文字列をJSTとして解釈したDateオブジェクトを返す
+ * @param {string} timeStr - イベント時刻 ("YYYY-MM-DDTHH:MM")
+ * @returns {Date} JSTとして解釈されたDateオブジェクト
+ */
+function getJstTime(timeStr) {
+  // タイムゾーン情報がないT形式の時刻にZを付加してUTCとして解釈させる
+  // ブラウザのローカルタイムゾーンの影響を受けにくくする
+  return new Date(timeStr + "Z"); 
 }
+
+/**
+ * JST 9:00 を基準にして、そのイベントが属する「日」を YYYY-MM-DD 形式で返す
+ * @param {string} timeStr - イベント時刻 ("YYYY-MM-DDTHH:MM")
+ * @returns {string} YYYY-MM-DD形式の日付文字列
+ */
+function getJstDate(timeStr) {
+  const dt = getJstTime(timeStr);
+  // JSTの時刻を取得
+  const jstHours = dt.getUTCHours(); 
+  const jstDate = new Date(dt.getTime());
+  
+  // JST 0:00〜8:59 の場合、前日の日付として扱う
+  if(jstHours < 9) {
+    jstDate.setUTCDate(jstDate.getUTCDate() - 1);
+  }
+
+  // YYYY-MM-DD 形式で取得（UTCベースで取得）
+  return jstDate.toISOString().slice(0, 10);
+}
+
+/**
+ * 9時基準で2つの時刻が同じ日かを判定
+ * @param {Date} d1 - 基準時刻
+ * @param {Date} d2 - 比較時刻
+ * @returns {boolean} 同じ日なら true
+ */
+function isSameJstDay(d1, d2) {
+    // 9時基準で日付をリセットした時刻を比較
+    const getBaseDate = (date) => {
+        const temp = new Date(date);
+        // JST 9:00 を基準にするために、一旦UTC時刻を9時間ずらす
+        temp.setUTCHours(temp.getUTCHours() - 9);
+        // 時刻情報をリセットし、日付部分だけを文字列化して比較
+        return temp.toISOString().slice(0, 10);
+    };
+    return getBaseDate(d1) === getBaseDate(d2);
+}
+
 
 // --- イベント追加 ---
 function addEvent(el, name, timeStr){
   if(clearedStages.includes(name)) return; // ステージ単位で非表示
+  
   const li = document.createElement("li");
   li.className = "event-item upcoming";
-  const d = new Date(timeStr + "+09:00");
-  const timeText = d.getHours().toString().padStart(2,'0') + ":" + d.getMinutes().toString().padStart(2,'0');
+  
+  const d = getJstTime(timeStr); 
+  
+  // 時刻をJSTで表示するために UTC の時間を使用
+  const timeText = d.getUTCHours().toString().padStart(2,'0') + ":" + d.getUTCMinutes().toString().padStart(2,'0');
+  
   li.innerHTML = `<span class="event-time">${timeText}</span>${name} <input type="checkbox" class="check">`;
 
   const checkbox = li.querySelector(".check");
-  checkbox.checked = clearedStages.includes(name);
+  // チェックボックスの初期状態を設定（クリア済みはチェック状態のまま）
+  checkbox.checked = clearedStages.includes(name); 
 
-  // チェックは即反映せず、反映ボタンで URL 更新
+  // チェックは即反映せず、反映ボタンで URL 更新 (変更なし)
   checkbox.addEventListener("change", ()=>{});
 
   el.appendChild(li);
@@ -122,52 +173,72 @@ function render(){
   tomorrowEl.innerHTML=""; 
   futureEl.innerHTML="";
 
-  const now = new Date();
-  const todayStr = getJstDate(now);
-  const tomorrow = new Date(now);
-  tomorrow.setDate(now.getDate() + 1);
-  const tomorrowStr = getJstDate(tomorrow);
+  const now = new Date(); // 現在時刻 (ローカルタイムゾーン)
+  
+  // 9時基準で日付を判定
+  const JST_OFFSET_MS = 9 * 60 * 60 * 1000;
+  
+  // 今日の9時（JST）を基準点とする
+  const todayStart = new Date(now.getTime() + JST_OFFSET_MS); // UTC時刻をJSTに変換
+  todayStart.setUTCHours(9, 0, 0, 0); // JST 9:00 に設定
+  todayStart.setTime(todayStart.getTime() - JST_OFFSET_MS); // ローカルタイムに戻す（UTC 0:00 に相当）
+
+  // 現在の9時基準の「今日」のDateオブジェクト（比較用）
+  const nowJst = new Date(now.getTime() + JST_OFFSET_MS); // JST
+  
+  // 9時基準の「明日」のDateオブジェクト（比較用）
+  const tomorrowJst = new Date(nowJst);
+  tomorrowJst.setUTCDate(nowJst.getUTCDate() + 1);
 
   // 日付ごとにまとめる
-  let dateMap = {};
+  let dateMap = {}; // Key: YYYY-MM-DD
   events.forEach(ev => {
     ev.times.forEach(t => {
-      const dateStr = getJstDate(t);
+      const d = getJstTime(t); // イベント時刻（JST）
+      const dateStr = getJstDate(t); // 9時基準の日付文字列
+      
       if(!dateMap[dateStr]) dateMap[dateStr] = [];
-      dateMap[dateStr].push({name: ev.name, time: t});
+      dateMap[dateStr].push({name: ev.name, time: t, date: d});
     });
   });
 
-  // 今日
-  if(dateMap[todayStr]){
-    dateMap[todayStr].sort((a,b)=>new Date(a.time + "+09:00") - new Date(b.time + "+09:00"))
-                     .forEach(ev=>addEvent(todayEl, ev.name, ev.time));
-  }
+  // 分類と表示
+  Object.keys(dateMap).sort().forEach(dateStr => {
+      const eventList = dateMap[dateStr];
+      const firstEventDate = eventList[0].date; // 分類用のDateオブジェクト
 
-  // 明日
-  if(dateMap[tomorrowStr]){
-    dateMap[tomorrowStr].sort((a,b)=>new Date(a.time + "+09:00") - new Date(b.time + "+09:00"))
-                        .forEach(ev=>addEvent(tomorrowEl, ev.name, ev.time));
-  }
+      let targetEl = futureEl;
+      let titleText = dateStr;
 
-  // 明後日以降
-  Object.keys(dateMap)
-        .filter(d => d!==todayStr && d!==tomorrowStr)
-        .sort()
-        .forEach(date => {
-          const div = document.createElement("div");
-          const title = document.createElement("h3");
-          title.textContent = date;
-          div.appendChild(title);
+      if(isSameJstDay(firstEventDate, nowJst)){
+          // 今日
+          targetEl = todayEl;
+      } else if (isSameJstDay(firstEventDate, tomorrowJst)){
+          // 明日
+          targetEl = tomorrowEl;
+      } 
+      
+      // 明後日以降は、日付ごとに ul を作成してfutureElに追加
+      if (targetEl === futureEl) {
+        const div = document.createElement("div");
+        const title = document.createElement("h3");
+        title.textContent = dateStr;
+        div.appendChild(title);
 
-          const ul = document.createElement("ul"); ul.className="event-list";
+        const ul = document.createElement("ul"); ul.className="event-list";
+        
+        eventList.sort((a,b)=>a.date - b.date)
+                 .forEach(ev=>addEvent(ul, ev.name, ev.time));
 
-          dateMap[date].sort((a,b)=>new Date(a.time + "+09:00") - new Date(b.time + "+09:00"))
-                       .forEach(ev=>addEvent(ul, ev.name, ev.time));
+        div.appendChild(ul);
+        futureEl.appendChild(div);
 
-          div.appendChild(ul);
-          futureEl.appendChild(div);
-        });
+      } else {
+        // 今日・明日は ul に直接追加
+        eventList.sort((a,b)=>a.date - b.date)
+                 .forEach(ev=>addEvent(targetEl, ev.name, ev.time));
+      }
+  });
 
   renderClearedList();
 }
@@ -179,6 +250,7 @@ function renderClearedList(){
     clearedEl.textContent="なし"; 
     return;
   }
+  // (以降、変更なし)
   const ul = document.createElement("ul"); ul.className="event-list";
   clearedStages.forEach(name=>{
     const li = document.createElement("li");
@@ -196,10 +268,22 @@ function renderClearedList(){
 document.getElementById("update-url").addEventListener("click", ()=> {
   const newCleared = [];
   document.querySelectorAll(".check:checked").forEach(cb=>{
-    const name = cb.parentElement.textContent.replace(/\s*×/,'').trim();
-    if(!newCleared.includes(name)) newCleared.push(name);
+    // nameの取得方法を修正（チェックボックスから離れた親要素から名前を取得する必要があるため）
+    const listItem = cb.closest('.event-item');
+    if (listItem) {
+        // イベント名を取得するために、時刻とチェックボックスのテキストを除外してトリム
+        const timeText = listItem.querySelector('.event-time').textContent;
+        let name = listItem.textContent.replace(timeText, '').replace(/×$/, '').trim();
+        // チェックボックスの文字も消す
+        name = name.substring(0, name.length - 1).trim(); 
+        if(!newCleared.includes(name)) newCleared.push(name);
+    }
   });
-  if(newCleared.length>0) clearedStages = newCleared;
+
+  // URLパラメータ更新のロジックを修正
+  // 現在のclearedStagesと新しいnewClearedをマージし、重複を排除
+  clearedStages = Array.from(new Set([...clearedStages, ...newCleared]));
+
   const params = new URLSearchParams();
   if(clearedStages.length>0) params.set("cleared", clearedStages.join(","));
   window.location.search=params.toString();
@@ -217,6 +301,3 @@ render();
 </script>
 </body>
 </html>
-
-
-
