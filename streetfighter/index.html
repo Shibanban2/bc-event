@@ -3,40 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>イベント日程</title>
+<title>New Challenger スケジュール</title>
 <style>
-  body {
-    font-family: sans-serif;
-    padding: 10px;
-    background: #f9f9f9;
-  }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-    font-size: 16px; /* ← スマホ用に少し大きめ */
-  }
-  th, td {
-    border: 1px solid #ccc;
-    padding: 10px; /* ← 余白増やす */
-    text-align: center;
-  }
-  th {
-    background: #eee;
-  }
-  .done {
-    background: #d0f0d0;
-    text-decoration: line-through;
-  }
-  input[type="checkbox"] {
-    transform: scale(1.4); /* ← チェックボックスも大きめに */
+  body { font-family: sans-serif; padding: 10px; background: #f0f0f0; }
+  h2 { text-align: center; }
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 18px; }
+  th, td { border: 1px solid #ccc; padding: 12px; text-align: center; }
+  th { background: #ddd; }
+  tr.current { background: #fffae6; font-weight: bold; }
+  input[type="checkbox"] { transform: scale(1.3); }
+  @media(max-width:600px){
+    table { font-size: 16px; }
+    th, td { padding: 10px; }
   }
 </style>
 </head>
 <body>
 
-<h2>イベント日程</h2>
-
+<h2>New Challenger スケジュール</h2>
 <table id="schedule">
   <thead>
     <tr>
@@ -46,57 +30,80 @@
       <th>クリア</th>
     </tr>
   </thead>
-  <tbody>
-  </tbody>
+  <tbody></tbody>
 </table>
 
 <script>
+// --- 全てのステージデータをまとめる（例：一部抜粋、全部入れてもOK） ---
 const events = [
-  { date: "10/6", time: "12:00", stage: "天空アリーナ" },
-  { date: "10/6", time: "18:00", stage: "天空アリーナ" },
-  { date: "10/7", time: "15:00", stage: "灼熱砂漠" },
-  { date: "10/8", time: "21:00", stage: "氷結洞窟" },
-  { date: "10/9", time: "09:00", stage: "氷結洞窟" },
-  { date: "10/10", time: "20:00", stage: "雷鳴高原" },
-  { date: "10/11", time: "14:00", stage: "雷鳴高原" },
-  { date: "10/12", time: "08:00", stage: "幻影都市" },
-  { date: "10/13", time: "19:00", stage: "幻影都市" },
-  { date: "10/14", time: "17:00", stage: "天空アリーナ" },
-  { date: "10/15", time: "22:00", stage: "灼熱砂漠" },
-  { date: "10/16", time: "11:00", stage: "氷結洞窟" },
-  { date: "10/17", time: "16:00", stage: "雷鳴高原" },
-  { date: "10/18", time: "13:00", stage: "幻影都市" },
-  { date: "10/19", time: "09:00", stage: "天空アリーナ" },
-  { date: "10/20", time: "18:00", stage: "灼熱砂漠" },
-  { date: "10/21", time: "20:00", stage: "氷結洞窟" },
-  { date: "10/22", time: "21:00", stage: "雷鳴高原" },
-  { date: "10/23", time: "12:00", stage: "幻影都市" },
-  { date: "10/24", time: "08:00", stage: "天空アリーナ" }
+  {stage:"VSリュウ 初級", times:["10/5 12:00-14:00","10/6 03:00-05:00","10/11 18:00-20:00","10/13 12:00-14:00","10/17 00:00-02:00","10/19 12:00-14:00","10/20 03:00-05:00"]},
+  {stage:"VSリュウ 激ムズ", times:["10/4 18:00-20:00","10/6 12:00-14:00","10/10 12:00-14:00","10/12 00:00-02:00","10/13 21:00-23:00","10/18 18:00-20:00"]},
+  {stage:"VS春麗 初級", times:["10/5 12:00-14:00","10/7 12:00-14:00","10/11 18:00-20:00","10/14 21:00-23:00","10/17 00:00-02:00","10/19 12:00-14:00"]},
+  {stage:"VS春麗 激ムズ", times:["10/4 18:00-20:00","10/7 03:00-05:00","10/10 12:00-14:00","10/12 00:00-02:00","10/14 06:00-08:00","10/18 18:00-20:00"]},
+  // ...ここに全ステージ追加 ...
 ];
 
+// --- tbodyに反映 ---
 const tbody = document.querySelector("#schedule tbody");
 
-events.forEach(ev => {
+// 時刻順にフラットにする
+let flatEvents = [];
+events.forEach(e=>{
+  e.times.forEach(t=>{
+    flatEvents.push({stage:e.stage, time:t});
+  });
+});
+
+// 時刻順にソート
+flatEvents.sort((a,b)=>{
+  const parseTime = s => {
+    const [monthDay,hms] = s.split(" ");
+    const [month, day] = [10, parseInt(monthDay.split("/")[1])]; // 10月固定
+    const [h,m] = hms.split("-")[0].split(":");
+    return new Date(2025, month-1, day, parseInt(h), parseInt(m));
+  };
+  return parseTime(a.time) - parseTime(b.time);
+});
+
+// 現在に最も近いイベントを取得
+const now = new Date();
+let closestTime = Infinity, closestIndex = -1;
+flatEvents.forEach((e,i)=>{
+  const [monthDay,hms] = e.time.split(" ");
+  const [month, day] = [10, parseInt(monthDay.split("/")[1])];
+  const [h,m] = hms.split("-")[0].split(":");
+  const d = new Date(2025, month-1, day, parseInt(h), parseInt(m));
+  const diff = Math.abs(d - now);
+  if(diff < closestTime){
+    closestTime = diff;
+    closestIndex = i;
+  }
+});
+
+// --- 表に描画 ---
+flatEvents.forEach((e,i)=>{
   const tr = document.createElement("tr");
+  if(i===closestIndex) tr.classList.add("current");
   tr.innerHTML = `
-    <td>${ev.date}</td>
-    <td>${ev.time}</td>
-    <td>${ev.stage}</td>
-    <td><input type="checkbox" data-stage="${ev.stage}"></td>
+    <td>${e.time.split(" ")[0]}</td>
+    <td>${e.time.split(" ")[1]}</td>
+    <td>${e.stage}</td>
+    <td><input type="checkbox" data-stage="${e.stage}"></td>
   `;
   tbody.appendChild(tr);
 });
 
-tbody.addEventListener("change", e => {
-  if (e.target.type === "checkbox") {
+// --- クリアチェックで全同名削除 ---
+tbody.addEventListener("change", e=>{
+  if(e.target.type==="checkbox"){
     const stageName = e.target.dataset.stage;
-    if (e.target.checked) {
-      document.querySelectorAll(`input[data-stage="${stageName}"]`)
-        .forEach(chk => chk.closest("tr").remove());
-    }
+    document.querySelectorAll(`input[data-stage="${stageName}"]`).forEach(chk=>{
+      chk.closest("tr").remove();
+    });
   }
 });
 </script>
 
 </body>
 </html>
+
