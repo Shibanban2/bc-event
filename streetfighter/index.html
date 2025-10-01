@@ -81,9 +81,9 @@ const events =[
   {name: "VSジュリ 激ムズ", times:["2025-10-03T21:00","2025-10-05T09:00","2025-10-07T21:00","2025-10-11T03:00","2025-10-14T18:00","2025-10-17T21:00","2025-10-19T09:00"]}
 ];
 
-// --- クリア済み管理 ---
+// --- クリア済み管理（URLから） ---
 let urlParams = new URLSearchParams(window.location.search);
-let cleared = urlParams.get("cleared") ? urlParams.get("cleared").split(",") : [];
+let clearedStages = urlParams.get("cleared") ? urlParams.get("cleared").split(",") : [];
 
 // --- DOM参照 ---
 const todayEl = document.getElementById("today");
@@ -91,28 +91,27 @@ const tomorrowEl = document.getElementById("tomorrow");
 const futureEl = document.getElementById("future");
 const clearedEl = document.getElementById("cleared-list");
 
-// --- イベント追加 ---
-function addEvent(el, name, timeStr, isUpcoming){
-  const key = name + "|" + timeStr;
-  if(cleared.includes(key)) return; // クリア済みは非表示
+// --- 日付判定: JST 9:00～翌8:59を同じ日扱い ---
+function getJstDate(d){
+  let dt = new Date(d + "+09:00");
+  if(dt.getHours() < 9) dt.setDate(dt.getDate() - 1);
+  return dt.toISOString().slice(0,10);
+}
 
+// --- イベント追加 ---
+function addEvent(el, name, timeStr){
+  if(clearedStages.includes(name)) return; // ステージ単位で非表示
   const li = document.createElement("li");
-  li.className = "event-item" + (isUpcoming ? " upcoming" : "");
-  const d = new Date(timeStr + "+09:00"); // JST補正
+  li.className = "event-item upcoming";
+  const d = new Date(timeStr + "+09:00");
   const timeText = d.getHours().toString().padStart(2,'0') + ":" + d.getMinutes().toString().padStart(2,'0');
   li.innerHTML = `<span class="event-time">${timeText}</span>${name} <input type="checkbox" class="check">`;
 
   const checkbox = li.querySelector(".check");
-  checkbox.checked = cleared.includes(key);
-  checkbox.addEventListener("change", ()=> {
-    if(checkbox.checked){
-      if(!cleared.includes(key)) cleared.push(key);
-      li.style.display = "none"; // チェックしたら非表示
-    } else {
-      cleared = cleared.filter(x=>x!==key);
-      li.style.display = ""; // 再表示
-    }
-  });
+  checkbox.checked = clearedStages.includes(name);
+
+  // チェックは即反映せず、反映ボタンで URL 更新
+  checkbox.addEventListener("change", ()=>{});
 
   el.appendChild(li);
 }
@@ -124,17 +123,16 @@ function render(){
   futureEl.innerHTML="";
 
   const now = new Date();
-  const todayStr = now.toISOString().slice(0,10);
+  const todayStr = getJstDate(now);
   const tomorrow = new Date(now);
-  tomorrow.setDate(now.getDate()+1);
-  const tomorrowStr = tomorrow.toISOString().slice(0,10);
+  tomorrow.setDate(now.getDate() + 1);
+  const tomorrowStr = getJstDate(tomorrow);
 
   // 日付ごとにまとめる
   let dateMap = {};
   events.forEach(ev => {
     ev.times.forEach(t => {
-      const d = new Date(t + "+09:00");
-      const dateStr = d.toISOString().slice(0,10);
+      const dateStr = getJstDate(t);
       if(!dateMap[dateStr]) dateMap[dateStr] = [];
       dateMap[dateStr].push({name: ev.name, time: t});
     });
@@ -143,13 +141,13 @@ function render(){
   // 今日
   if(dateMap[todayStr]){
     dateMap[todayStr].sort((a,b)=>new Date(a.time + "+09:00") - new Date(b.time + "+09:00"))
-                     .forEach(ev=>addEvent(todayEl, ev.name, ev.time, true));
+                     .forEach(ev=>addEvent(todayEl, ev.name, ev.time));
   }
 
   // 明日
   if(dateMap[tomorrowStr]){
     dateMap[tomorrowStr].sort((a,b)=>new Date(a.time + "+09:00") - new Date(b.time + "+09:00"))
-                        .forEach(ev=>addEvent(tomorrowEl, ev.name, ev.time, true));
+                        .forEach(ev=>addEvent(tomorrowEl, ev.name, ev.time));
   }
 
   // 明後日以降
@@ -165,7 +163,7 @@ function render(){
           const ul = document.createElement("ul"); ul.className="event-list";
 
           dateMap[date].sort((a,b)=>new Date(a.time + "+09:00") - new Date(b.time + "+09:00"))
-                       .forEach(ev=>addEvent(ul, ev.name, ev.time,false));
+                       .forEach(ev=>addEvent(ul, ev.name, ev.time));
 
           div.appendChild(ul);
           futureEl.appendChild(div);
@@ -177,17 +175,16 @@ function render(){
 // --- クリア済みリスト ---
 function renderClearedList(){
   clearedEl.innerHTML="";
-  if(cleared.length===0){ 
+  if(clearedStages.length===0){ 
     clearedEl.textContent="なし"; 
     return;
   }
   const ul = document.createElement("ul"); ul.className="event-list";
-  cleared.forEach(c=>{
+  clearedStages.forEach(name=>{
     const li = document.createElement("li");
-    const [name,time] = c.split("|");
-    li.innerHTML = `${name} (${time}) <button class="remove">×</button>`;
+    li.innerHTML = `${name} <button class="remove">×</button>`;
     li.querySelector(".remove").addEventListener("click", ()=> {
-      cleared = cleared.filter(x=>x!==c);
+      clearedStages = clearedStages.filter(x=>x!==name);
       render();
     });
     ul.appendChild(li);
@@ -197,8 +194,14 @@ function renderClearedList(){
 
 // --- ボタン ---
 document.getElementById("update-url").addEventListener("click", ()=> {
+  const newCleared = [];
+  document.querySelectorAll(".check:checked").forEach(cb=>{
+    const name = cb.parentElement.textContent.replace(/\s*×/,'').trim();
+    if(!newCleared.includes(name)) newCleared.push(name);
+  });
+  if(newCleared.length>0) clearedStages = newCleared;
   const params = new URLSearchParams();
-  if(cleared.length>0) params.set("cleared", cleared.join(","));
+  if(clearedStages.length>0) params.set("cleared", clearedStages.join(","));
   window.location.search=params.toString();
 });
 
