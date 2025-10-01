@@ -51,7 +51,7 @@ const events =[
   {name: "VSリュウ 激ムズ", times:["2025-10-04T18:00","2025-10-06T12:00","2025-10-10T12:00","2025-10-12T00:00","2025-10-13T21:00","2025-10-18T18:00"]},
   {name: "VS春麗 初級", times:["2025-10-05T12:00","2025-10-07T12:00","2025-10-11T18:00","2025-10-14T21:00","2025-10-17T00:00","2025-10-19T12:00"]},
   {name: "VS春麗 激ムズ", times:["2025-10-04T18:00","2025-10-07T03:00","2025-10-10T12:00","2025-10-12T00:00","2025-10-14T06:00","2025-10-18T18:00"]},
-  {name: "VSガイル 初級", times:["2025-10-05T00:00","2025-10-08T03:00","2025-10-11T12:00","2025-10-15T12:00","2025-10-17T06:00","2025-10-19T18:00"]},
+  {name: "VSガイル 初級", times:["2025-10-05T18:00","2025-10-08T03:00","2025-10-11T12:00","2025-10-15T12:00","2025-10-17T06:00","2025-10-19T18:00"]},
   {name: "VSガイル 激ムズ", times:["2025-10-04T12:00","2025-10-08T12:00","2025-10-10T18:00","2025-10-12T06:00","2025-10-15T03:00","2025-10-18T12:00"]},
   {name: "VSザンギエフ 初級", times:["2025-10-05T18:00","2025-10-09T12:00","2025-10-11T12:00","2025-10-16T21:00","2025-10-17T06:00","2025-10-19T18:00"]},
   {name: "VSザンギエフ 激ムズ", times:["2025-10-04T12:00","2025-10-09T03:00","2025-10-10T18:00","2025-10-12T06:00","2025-10-16T06:00","2025-10-18T12:00"]},
@@ -101,12 +101,12 @@ function addEvent(el, name, timeStr, isUpcoming){
   
   const checkbox = li.querySelector(".check");
   checkbox.checked = cleared.includes(name+"|"+timeStr); // 日付込みで判定
-  checkbox.addEventListener("change", ()=>{
+  checkbox.addEventListener("change", ()=> {
     const key = name+"|"+timeStr;
     if(checkbox.checked){
       if(!cleared.includes(key)) cleared.push(key);
     } else {
-      cleared = cleared.filter(x=>x!==key); // 解除機能
+      cleared = cleared.filter(x=>x!==key);
     }
   });
   el.appendChild(li);
@@ -114,46 +114,58 @@ function addEvent(el, name, timeStr, isUpcoming){
 
 // --- レンダリング ---
 function render(){
-  todayEl.innerHTML=""; tomorrowEl.innerHTML=""; futureEl.innerHTML="";
-  let futureMap = {};
+  todayEl.innerHTML=""; 
+  tomorrowEl.innerHTML=""; 
+  futureEl.innerHTML="";
+
   const now = new Date();
-
-  let todayStr = now.toISOString().slice(0,10);
-  let tomorrow = new Date(now);
+  const todayStr = now.toISOString().slice(0,10);
+  const tomorrow = new Date(now); 
   tomorrow.setDate(now.getDate()+1);
-  let tomorrowStr = tomorrow.toISOString().slice(0,10);
+  const tomorrowStr = tomorrow.toISOString().slice(0,10);
 
-  events.forEach(ev=>{
-    ev.times.forEach(t=>{
+  // 日付ごとにイベントをまとめる
+  let dateMap = {}; // { "YYYY-MM-DD": [{name, time}] }
+
+  events.forEach(ev => {
+    ev.times.forEach(t => {
       const d = new Date(t);
       const dateStr = d.toISOString().slice(0,10);
-
-      const diffTime = d - now;
-      const diffDays = Math.floor(diffTime / (1000*60*60*24));
-
-      if(diffDays===0 && dateStr===todayStr) addEvent(todayEl, ev.name, t, true);
-      else if(diffDays===1 || dateStr===tomorrowStr) addEvent(tomorrowEl, ev.name, t, true);
-      else {
-        if(!futureMap[dateStr]) futureMap[dateStr] = [];
-        futureMap[dateStr].push({name: ev.name, time: t});
-      }
+      if(!dateMap[dateStr]) dateMap[dateStr] = [];
+      dateMap[dateStr].push({name: ev.name, time: t});
     });
   });
 
+  // 今日
+  if(dateMap[todayStr]){
+    dateMap[todayStr].sort((a,b)=>new Date(a.time)-new Date(b.time))
+                     .forEach(ev=>addEvent(todayEl, ev.name, ev.time, true));
+  }
+
+  // 明日
+  if(dateMap[tomorrowStr]){
+    dateMap[tomorrowStr].sort((a,b)=>new Date(a.time)-new Date(b.time))
+                        .forEach(ev=>addEvent(tomorrowEl, ev.name, ev.time, true));
+  }
+
   // 明後日以降
-  Object.keys(futureMap).sort().forEach(date=>{
-    const div = document.createElement("div");
-    const title = document.createElement("h3");
-    title.textContent = date;
-    div.appendChild(title);
+  Object.keys(dateMap)
+        .filter(d => d!==todayStr && d!==tomorrowStr)
+        .sort()
+        .forEach(date => {
+          const div = document.createElement("div");
+          const title = document.createElement("h3");
+          title.textContent = date;
+          div.appendChild(title);
 
-    const ul = document.createElement("ul"); ul.className="event-list";
+          const ul = document.createElement("ul"); ul.className="event-list";
 
-    futureMap[date].sort((a,b)=>new Date(a.time)-new Date(b.time))
-                    .forEach(ev=>addEvent(ul, ev.name, ev.time,false));
-    div.appendChild(ul);
-    futureEl.appendChild(div);
-  });
+          dateMap[date].sort((a,b)=>new Date(a.time)-new Date(b.time))
+                       .forEach(ev=>addEvent(ul, ev.name, ev.time,false));
+
+          div.appendChild(ul);
+          futureEl.appendChild(div);
+        });
 
   renderClearedList();
 }
@@ -161,13 +173,16 @@ function render(){
 // --- クリア済みリスト ---
 function renderClearedList(){
   clearedEl.innerHTML="";
-  if(cleared.length===0){ clearedEl.textContent="なし"; return;}
+  if(cleared.length===0){ 
+    clearedEl.textContent="なし"; 
+    return;
+  }
   const ul = document.createElement("ul"); ul.className="event-list";
   cleared.forEach(c=>{
     const li = document.createElement("li");
     const [name,time] = c.split("|");
     li.innerHTML = `${name} (${time}) <button class="remove">×</button>`;
-    li.querySelector(".remove").addEventListener("click", ()=>{
+    li.querySelector(".remove").addEventListener("click", ()=> {
       cleared = cleared.filter(x=>x!==c);
       render();
     });
@@ -177,17 +192,17 @@ function renderClearedList(){
 }
 
 // --- ボタン ---
-document.getElementById("update-url").addEventListener("click", ()=>{
+document.getElementById("update-url").addEventListener("click", ()=> {
   const params = new URLSearchParams();
   if(cleared.length>0) params.set("cleared", cleared.join(","));
   window.location.search=params.toString();
 });
 
-document.getElementById("copy-url").addEventListener("click", ()=>{
+document.getElementById("copy-url").addEventListener("click", ()=> {
   navigator.clipboard.writeText(window.location.href).then(()=>alert("URLをコピーしました！"));
 });
 
-document.getElementById("show-cleared").addEventListener("click", ()=>{
+document.getElementById("show-cleared").addEventListener("click", ()=> {
   clearedEl.style.display = clearedEl.style.display==="none" ? "block" : "none";
 });
 
@@ -196,5 +211,6 @@ render();
 
 </body>
 </html>
+
 
 
