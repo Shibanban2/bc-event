@@ -88,7 +88,6 @@ let cleared = urlParams.get("cleared") ? urlParams.get("cleared").split(",") : [
 
 // --- 現在日付 ---
 const now = new Date();
-const todayDate = now.toISOString().slice(0,10);
 
 // --- DOM参照 ---
 const todayEl = document.getElementById("today");
@@ -102,7 +101,7 @@ function addEvent(el, name, timeStr, isUpcoming){
   li.className = "event-item" + (isUpcoming ? " upcoming" : "");
   const d = new Date(timeStr);
   const timeText = d.getHours().toString().padStart(2,'0')+":"+d.getMinutes().toString().padStart(2,'0');
-  li.innerHTML = `<span class="event-time">${timeText}</span>${name}（2時間開催） <input type="checkbox" class="check">`;
+  li.innerHTML = `<span class="event-time">${timeText}</span>${name} <input type="checkbox" class="check">`;
   const checkbox = li.querySelector(".check");
   checkbox.checked = cleared.includes(name);
   checkbox.addEventListener("change", ()=>{checkbox.checked?cleared.push(name):cleared=cleared.filter(x=>x!==name);});
@@ -167,6 +166,7 @@ render();
 
 </body>
 </html>
+
 
 </body>
 </html>
