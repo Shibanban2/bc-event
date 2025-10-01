@@ -219,12 +219,9 @@ function getJstTime(timeStr) {
  * @returns {string} 
  */
 function getJstDateString(dt) {
-  const baseDate = new Date(dt.getTime());
-  
-  
-  // 
-  
-  return baseDate.toISOString().slice(0, 10);
+  // UTC→JST (+9時間)
+  const jst = new Date(dt.getTime() + 9 * 60 * 60 * 1000);
+  return jst.toISOString().slice(0, 10); // JSTの日付部分を取る
 }
 
 /**
