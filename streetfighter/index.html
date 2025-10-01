@@ -424,7 +424,7 @@ document.getElementById("copy-url").addEventListener("click", ()=> {
 document.getElementById("show-cleared").addEventListener("click", (e)=> {
   const isHidden = clearedEl.style.display==="none" || clearedEl.style.display==="";
   clearedEl.style.display = isHidden ? "block" : "none";
-  e.target.textContent = isHidden ? '🙈 クリア済みを隠す' : '👁️ クリア済みを見る';
+  e.target.textContent = isHidden ? 'クリア済みを隠す' : 'クリア済みを見る';
 });
 
 // 初回実行
