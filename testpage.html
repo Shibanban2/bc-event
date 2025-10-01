@@ -205,21 +205,18 @@ const DURATION_MS = 2 * 60 * 60 * 1000;
 const eventNameToIndex = new Map(events.map((e, i) => [e.name, i]));
 const eventIndexToName = events.map(e => e.name);
 
-// **URL短縮のための関数 (インデックスのカンマ区切り)**
+// URL短縮のための関数 (インデックスのカンマ区切り)
 function namesToIndicesString(names) {
-    // イベント名をインデックスに変換し、ソートしてからカンマ区切り文字列にする
     const indices = names.map(name => eventNameToIndex.get(name)).filter(i => i !== undefined);
     return indices.sort((a, b) => a - b).join(',');
 }
 
 function indicesStringToNames(str) {
     if (!str) return [];
-    // カンマ区切り文字列をインデックス配列に変換し、イベント名に変換
     return str.split(',').map(i => eventIndexToName[parseInt(i, 10)]).filter(name => name);
 }
 
 let urlParams = new URLSearchParams(window.location.search);
-// **修正**: URLパラメータから短縮されたインデックス文字列を読み込み、イベント名配列に変換
 let clearedStages = indicesStringToNames(urlParams.get("cleared"));
 
 const todayEl = document.getElementById("today");
@@ -228,8 +225,9 @@ const futureEl = document.getElementById("future");
 const clearedEl = document.getElementById("cleared-list");
 
 function getJstTime(timeStr) {
-  // ISO文字列（UTCとして解釈される）をJST時間として取得
-  return new Date(timeStr + "Z"); 
+  // **修正**: イベント時刻文字列をローカルタイムゾーン（JST）として解釈させるため、末尾の"Z"を削除
+  // Date()はタイムゾーン指定がない場合、ローカルタイムゾーンとして解釈する
+  return new Date(timeStr); 
 }
 
 /**
@@ -238,9 +236,14 @@ function getJstTime(timeStr) {
  * @returns {string} YYYY-MM-DD形式の日付文字列
  */
 function getJstDateString(dt) {
-  // **変更**: JSTはUTC+9。dtが表す時刻に9時間加算し、UTCで日付部分を取得することでJSTの日付として扱う
+  // **修正**: JSTのDateオブジェクトの時刻を00:00:00に設定し、その日付部分をISO形式で取得
+  const baseDate = new Date(dt.getTime());
+  baseDate.setHours(0, 0, 0, 0); // JSTの時刻を0:00に設定
+  
+  // toISOString()はUTC時間として出力するため、ローカルタイムゾーンの影響を受けずに日付部分（YYYY-MM-DD）を取得するために
+  // 一旦、JSTの0:00をUTCに変換して日付部分を抽出する。
   const JST_OFFSET_MS = 9 * 60 * 60 * 1000;
-  const targetDate = new Date(dt.getTime() + JST_OFFSET_MS);
+  const targetDate = new Date(baseDate.getTime() + JST_OFFSET_MS);
 
   // UTCのYY-MM-DDを取得し、JSTの日付として扱う
   return targetDate.toISOString().slice(0, 10);
@@ -272,7 +275,8 @@ function addEvent(el, name, timeStart, isUpcoming){
   */
   const timeEnd = new Date(timeStart.getTime() + duration);
   
-  const formatTime = (d) => d.getUTCHours().toString().padStart(2,'0') + ":" + d.getUTCMinutes().toString().padStart(2,'0');
+  // **修正**: 表示時刻をローカルタイム（JST）で正しくフォーマット
+  const formatTime = (d) => d.getHours().toString().padStart(2,'0') + ":" + d.getMinutes().toString().padStart(2,'0');
   
   const timeText = formatTime(timeStart) + "～" + formatTime(timeEnd);
   
@@ -291,18 +295,20 @@ function addEvent(el, name, timeStart, isUpcoming){
 }
 
 function render(){
-  // **修正**: 初期化で中身を空にする
+  // 初期化
   todayEl.innerHTML = ''; 
   tomorrowEl.innerHTML = '';
   futureEl.innerHTML = "";
 
-  const nowJst = getJstTime(new Date().toISOString().slice(0, 16));
+  // **修正**: 現在時刻のDateオブジェクトをJSTとして取得
+  const nowJst = new Date(); 
+  
+  // 0:00基準で今日の日付文字列を取得
   const todayStr = getJstDateString(nowJst);
   
-  
+  // 明日の日付文字列を取得
   const tomorrowJst = new Date(nowJst.getTime());
-  // 翌日の0:00のDateオブジェクトを作成し、そこから日付文字列を取得
-  tomorrowJst.setUTCDate(tomorrowJst.getUTCDate() + 1); 
+  tomorrowJst.setDate(tomorrowJst.getDate() + 1); 
   const tomorrowStr = getJstDateString(tomorrowJst);
 
 
@@ -315,7 +321,6 @@ function render(){
       if(timeStart.getTime() < nowJst.getTime() - DURATION_MS || clearedStages.includes(ev.name)) {
         return;
       }
-      // **修正**: dateStrの取得に修正後の関数を使用
       allEvents.push({name: ev.name, time: t, date: timeStart, dateStr: getJstDateString(timeStart)});
     });
   });
@@ -423,7 +428,7 @@ document.getElementById("update-url").addEventListener("click", ()=> {
 
   const params = new URLSearchParams();
   if(updatedClearedStages.length>0) {
-    // **修正**: イベント名をインデックスのカンマ区切り文字列に変換してURLを短縮
+    // イベント名をインデックスのカンマ区切り文字列に変換してURLを短縮
     const shortParam = namesToIndicesString(updatedClearedStages);
     params.set("cleared", shortParam);
   }
