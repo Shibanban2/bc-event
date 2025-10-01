@@ -210,7 +210,7 @@ const futureEl = document.getElementById("future");
 const clearedEl = document.getElementById("cleared-list");
 
 function getJstTime(timeStr) {
-  return new Date(timeStr + "Z"); 
+  return new Date(timeStr); // JSTとしてそのまま解釈
 }
 
 /**
@@ -219,9 +219,10 @@ function getJstTime(timeStr) {
  * @returns {string} 
  */
 function getJstDateString(dt) {
-  // UTC→JST (+9時間)
-  const jst = new Date(dt.getTime() + 9 * 60 * 60 * 1000);
-  return jst.toISOString().slice(0, 10); // JSTの日付部分を取る
+  const y = dt.getFullYear();
+  const m = String(dt.getMonth() + 1).padStart(2, "0");
+  const d = String(dt.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
 /**
