@@ -93,22 +93,27 @@ const clearedEl = document.getElementById("cleared-list");
 
 // --- イベント追加 ---
 function addEvent(el, name, timeStr, isUpcoming){
+  const key = name + "|" + timeStr;
+  if(cleared.includes(key)) return; // クリア済みは非表示
+
   const li = document.createElement("li");
   li.className = "event-item" + (isUpcoming ? " upcoming" : "");
-  const d = new Date(timeStr);
-  const timeText = d.getHours().toString().padStart(2,'0')+":"+d.getMinutes().toString().padStart(2,'0');
+  const d = new Date(timeStr + "+09:00"); // JST補正
+  const timeText = d.getHours().toString().padStart(2,'0') + ":" + d.getMinutes().toString().padStart(2,'0');
   li.innerHTML = `<span class="event-time">${timeText}</span>${name} <input type="checkbox" class="check">`;
-  
+
   const checkbox = li.querySelector(".check");
-  checkbox.checked = cleared.includes(name+"|"+timeStr); // 日付込みで判定
+  checkbox.checked = cleared.includes(key);
   checkbox.addEventListener("change", ()=> {
-    const key = name+"|"+timeStr;
     if(checkbox.checked){
       if(!cleared.includes(key)) cleared.push(key);
+      li.style.display = "none"; // チェックしたら非表示
     } else {
       cleared = cleared.filter(x=>x!==key);
+      li.style.display = ""; // 再表示
     }
   });
+
   el.appendChild(li);
 }
 
@@ -120,16 +125,15 @@ function render(){
 
   const now = new Date();
   const todayStr = now.toISOString().slice(0,10);
-  const tomorrow = new Date(now); 
+  const tomorrow = new Date(now);
   tomorrow.setDate(now.getDate()+1);
   const tomorrowStr = tomorrow.toISOString().slice(0,10);
 
-  // 日付ごとにイベントをまとめる
-  let dateMap = {}; // { "YYYY-MM-DD": [{name, time}] }
-
+  // 日付ごとにまとめる
+  let dateMap = {};
   events.forEach(ev => {
     ev.times.forEach(t => {
-      const d = new Date(t);
+      const d = new Date(t + "+09:00");
       const dateStr = d.toISOString().slice(0,10);
       if(!dateMap[dateStr]) dateMap[dateStr] = [];
       dateMap[dateStr].push({name: ev.name, time: t});
@@ -138,13 +142,13 @@ function render(){
 
   // 今日
   if(dateMap[todayStr]){
-    dateMap[todayStr].sort((a,b)=>new Date(a.time)-new Date(b.time))
+    dateMap[todayStr].sort((a,b)=>new Date(a.time + "+09:00") - new Date(b.time + "+09:00"))
                      .forEach(ev=>addEvent(todayEl, ev.name, ev.time, true));
   }
 
   // 明日
   if(dateMap[tomorrowStr]){
-    dateMap[tomorrowStr].sort((a,b)=>new Date(a.time)-new Date(b.time))
+    dateMap[tomorrowStr].sort((a,b)=>new Date(a.time + "+09:00") - new Date(b.time + "+09:00"))
                         .forEach(ev=>addEvent(tomorrowEl, ev.name, ev.time, true));
   }
 
@@ -160,7 +164,7 @@ function render(){
 
           const ul = document.createElement("ul"); ul.className="event-list";
 
-          dateMap[date].sort((a,b)=>new Date(a.time)-new Date(b.time))
+          dateMap[date].sort((a,b)=>new Date(a.time + "+09:00") - new Date(b.time + "+09:00"))
                        .forEach(ev=>addEvent(ul, ev.name, ev.time,false));
 
           div.appendChild(ul);
@@ -208,7 +212,6 @@ document.getElementById("show-cleared").addEventListener("click", ()=> {
 
 render();
 </script>
-
 </body>
 </html>
 
