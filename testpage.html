@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>New Challenger</title>
+<style>
+
+body { 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+    margin:0; 
+    padding:0; 
+    background:#f2f3f5; 
+    color:#2c3e50; 
+}
+header { 
+    background:#e74c3c; 
+    color:#fff; 
+    text-align:center; 
+    padding:15px 0; 
+    font-size:1.6em; 
+    font-weight:700; 
+    box-shadow:0 3px 6px rgba(0,0,0,0.1); 
+}
+section { 
+    margin:16px auto; 
+    padding:0 8px;
+    max-width: 800px; 
+}
+h2 { 
+    font-size:1.3em; 
+    margin-bottom:10px; 
+    border-bottom:2px solid #bdc3c7; 
+    padding-bottom:5px;
+    color:#34495e; 
+    font-weight:600;
+}
+h3 {
+    font-size:1.1em;
+    margin-top: 15px;
+    margin-bottom: 5px;
+    color: #8e44ad; 
+}
+
+.event-list { 
+    list-style:none; 
+    padding:0; 
+    margin:0; 
+}
+.event-item { 
+    background:#fff; 
+    margin-bottom:8px; 
+    padding:12px 15px; 
+    border-radius:8px; 
+    box-shadow:0 2px 4px rgba(0,0,0,0.08); 
+    display:flex; 
+    justify-content:space-between; 
+    align-items:center; 
+    font-size:1em; 
+    transition: all 0.2s ease-in-out;
+}
+.event-item.upcoming { 
+    border-left:6px solid #e74c3c; 
+}
+
+/* イベント時刻 */
+.event-time { 
+    font-weight:bold; 
+    margin-right:15px; 
+    color:#2980b9; 
+    flex-shrink: 0; 
+    min-width: 100px;
+}
+.event-name {
+    flex-grow: 1;
+}
+
+
+.check { 
+    transform:scale(1.4); 
+    cursor:pointer; 
+    margin-left: 10px;
+    flex-shrink: 0;
+}
+
+
+.button-group {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+button { 
+    padding:8px 15px; 
+    border:none; 
+    border-radius:5px; 
+    cursor:pointer; 
+    background:#3498db; 
+    color:#fff; 
+    font-weight:600;
+    transition: background 0.2s;
+}
+button:hover {
+    background:#2980b9;
+}
+#update-url { background:#e67e22; } 
+#update-url:hover { background:#d35400; }
+
+
+#cleared-list { 
+    display:none; 
+    margin-top:10px; 
+    padding: 10px;
+    background: #ecf0f1;
+    border-radius: 5px;
+}
+#cleared-list .event-item {
+    background: #bdc3c7;
+    padding: 8px 10px;
+    font-size: 0.9em;
+    border-left: 4px solid #7f8c8d;
+}
+#cleared-list .remove {
+    background: #c0392b;
+    color: #fff;
+    padding: 2px 8px;
+    font-size: 0.8em;
+}
+
+
+@media(max-width:600px){ 
+    .event-item { font-size:0.9em; padding:10px; } 
+    .event-time { margin-right:8px; min-width: 80px; } 
+    .button-group button { font-size: 0.9em; padding: 6px 10px; }
+}
+</style>
+</head>
+<body>
+
+<header>New Challenger</header>
+
+<section>
+  <div class="button-group">
+    <button id="update-url">クリアを反映・URL更新</button>
+    <button id="copy-url">URLをコピー</button>
+    <button id="show-cleared">クリア済みを見る</button>
+  </div>
+  <div id="cleared-list"></div>
+</section>
+
+<section>
+  <h2>本日の未クリアイベント</h2>
+  <ul id="today" class="event-list"></ul>
+</section>
+
+<section>
+  <h2>明日の未クリアイベント</h2>
+  <ul id="tomorrow" class="event-list"></ul>
+</section>
+
+<section>
+  <h2>明後日以降の未クリアイベント</h2>
+  <div id="future"></div>
+</section>
+
+<script>
+const events =[
+  {name: "VSリュウ 初級", times:["2025-10-05T12:00","2025-10-06T03:00","2025-10-11T18:00","2025-10-13T12:00","2025-10-17T00:00","2025-10-19T12:00","2025-10-20T03:00"]},
+  {name: "VSリュウ 激ムズ", times:["2025-10-04T18:00","2025-10-06T12:00","2025-10-10T12:00","2025-10-12T00:00","2025-10-13T21:00","2025-10-18T18:00"]},
+  {name: "VS春麗 初級", times:["2025-10-05T12:00","2025-10-07T12:00","2025-10-11T18:00","2025-10-14T21:00","2025-10-17T00:00","2025-10-19T12:00"]},
+  {name: "VS春麗 激ムズ", times:["2025-10-04T18:00","2025-10-07T03:00","2025-10-10T12:00","2025-10-12T00:00","2025-10-14T06:00","2025-10-18T18:00"]},
+  {name: "VSガイル 初級", times:["2025-10-05T18:00","2025-10-08T03:00","2025-10-11T12:00","2025-10-15T12:00","2025-10-17T06:00","2025-10-19T18:00"]},
+  {name: "VSガイル 激ムズ", times:["2025-10-04T12:00","2025-10-08T12:00","2025-10-10T18:00","2025-10-12T06:00","2025-10-15T03:00","2025-10-18T12:00"]},
+  {name: "VSザンギエフ 初級", times:["2025-10-05T18:00","2025-10-09T12:00","2025-10-11T12:00","2025-10-16T21:00","2025-10-17T06:00","2025-10-19T18:00"]},
+  {name: "VSザンギエフ 激ムズ", times:["2025-10-04T12:00","2025-10-09T03:00","2025-10-10T18:00","2025-10-12T06:00","2025-10-16T06:00","2025-10-18T12:00"]},
+  {name: "VSブランカ 初級", times:["2025-10-03T12:00","2025-10-05T00:00","2025-10-06T15:00","2025-10-11T06:00","2025-10-13T00:00","2025-10-17T12:00","2025-10-19T00:00"]},
+  {name: "VSブランカ 激ムズ", times:["2025-10-04T06:00","2025-10-06T06:00","2025-10-10T00:00","2025-10-12T12:00","2025-10-13T09:00","2025-10-18T06:00","2025-10-20T06:00"]},
+  {name: "VSダルシム 初級", times:["2025-10-03T12:00","2025-10-05T00:00","2025-10-07T00:00","2025-10-11T06:00","2025-10-14T15:00","2025-10-17T12:00","2025-10-19T00:00"]},
+  {name: "VSダルシム 激ムズ", times:["2025-10-04T06:00","2025-10-07T15:00","2025-10-10T00:00","2025-10-12T12:00","2025-10-14T00:00","2025-10-18T06:00"]},
+  {name: "VSケン 初級", times:["2025-10-03T18:00","2025-10-05T06:00","2025-10-08T09:00","2025-10-11T00:00","2025-10-15T00:00","2025-10-17T18:00","2025-10-19T06:00"]},
+  {name: "VSケン 激ムズ", times:["2025-10-04T00:00","2025-10-08T18:00","2025-10-10T06:00","2025-10-12T18:00","2025-10-15T21:00","2025-10-18T00:00"]},
+  {name: "VSエドモンド本田 初級", times:["2025-10-03T18:00","2025-10-05T06:00","2025-10-09T00:00","2025-10-11T00:00","2025-10-16T15:00","2025-10-17T18:00","2025-10-19T06:00"]},
+  {name: "VSエドモンド本田 激ムズ", times:["2025-10-04T00:00","2025-10-09T15:00","2025-10-10T06:00","2025-10-12T18:00","2025-10-16T00:00","2025-10-18T00:00"]},
+  {name: "VSバイソン 中級", times:["2025-10-04T21:00","2025-10-06T09:00","2025-10-10T03:00","2025-10-12T15:00","2025-10-13T18:00","2025-10-18T21:00"]},
+  {name: "VSバイソン 超激ムズ", times:["2025-10-05T15:00","2025-10-06T18:00","2025-10-11T21:00","2025-10-13T03:00","2025-10-17T03:00","2025-10-19T15:00","2025-10-20T00:00"]},
+  {name: "VSバルログ 中級", times:["2025-10-04T21:00","2025-10-07T18:00","2025-10-10T03:00","2025-10-12T15:00","2025-10-14T03:00","2025-10-18T21:00"]},
+  {name: "VSバルログ 超激ムズ", times:["2025-10-05T15:00","2025-10-07T09:00","2025-10-11T21:00","2025-10-14T12:00","2025-10-17T03:00","2025-10-19T15:00"]},
+  {name: "VSサガット 中級", times:["2025-10-04T15:00","2025-10-08T21:00","2025-10-10T09:00","2025-10-12T21:00","2025-10-15T06:00","2025-10-18T15:00"]},
+  {name: "VSサガット 超激ムズ", times:["2025-10-05T21:00","2025-10-08T06:00","2025-10-11T15:00","2025-10-15T15:00","2025-10-17T09:00","2025-10-19T21:00"]},
+  {name: "VSベガ 中級", times:["2025-10-04T15:00","2025-10-09T06:00","2025-10-10T09:00","2025-10-12T21:00","2025-10-16T03:00","2025-10-18T15:00"]},
+  {name: "VSベガ 超激ムズ", times:["2025-10-05T21:00","2025-10-09T21:00","2025-10-11T15:00","2025-10-16T12:00","2025-10-17T09:00","2025-10-19T21:00"]},
+  {name: "VSさくら 初級", times:["2025-10-04T09:00","2025-10-08T15:00","2025-10-10T15:00","2025-10-12T03:00","2025-10-15T18:00","2025-10-18T09:00"]},
+  {name: "VSさくら 激ムズ", times:["2025-10-03T15:00","2025-10-05T03:00","2025-10-08T00:00","2025-10-11T09:00","2025-10-15T09:00","2025-10-17T15:00","2025-10-19T03:00"]},
+  {name: "VSルーク 初級", times:["2025-10-04T09:00","2025-10-09T18:00","2025-10-10T15:00","2025-10-12T03:00","2025-10-16T09:00","2025-10-18T09:00"]},
+  {name: "VSルーク 激ムズ", times:["2025-10-03T15:00","2025-10-05T03:00","2025-10-09T09:00","2025-10-11T09:00","2025-10-16T18:00","2025-10-17T15:00","2025-10-19T03:00"]},
+  {name: "VSキャミィ 初級", times:["2025-10-04T03:00","2025-10-06T21:00","2025-10-10T21:00","2025-10-12T09:00","2025-10-13T06:00","2025-10-18T03:00","2025-10-20T09:00"]},
+  {name: "VSキャミィ 激ムズ", times:["2025-10-03T21:00","2025-10-05T09:00","2025-10-06T00:00","2025-10-11T03:00","2025-10-13T15:00","2025-10-17T21:00","2025-10-19T09:00"]},
+  {name: "VSジュリ 初級", times:["2025-10-04T03:00","2025-10-07T06:00","2025-10-10T21:00","2025-10-12T09:00","2025-10-14T09:00","2025-10-18T03:00"]},
+  {name: "VSジュリ 激ムズ", times:["2025-10-03T21:00","2025-10-05T09:00","2025-10-07T21:00","2025-10-11T03:00","2025-10-14T18:00","2025-10-17T21:00","2025-10-19T09:00"]}
+];
+
+const DURATION_MS = 2 * 60 * 60 * 1000; 
+
+// Base62エンコーディング用の文字セット
+const BASE62_CHARS = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+// イベント名からインデックスへのマップを作成
+const eventNameToIndex = new Map(events.map((e, i) => [e.name, i]));
+const eventIndexToName = events.map(e => e.name);
+
+// Base62エンコード関数
+function encodeBase62(numbers) {
+    let result = '';
+    // 数値をコンマで結合し、一つの大きな数値文字列として扱う
+    const base10 = numbers.join(',');
+    
+    // 文字列をベース62でエンコード（ここではインデックスのリストをエンコード）
+    // イベント数が少ないため、単純なjoinで短縮する
+    return numbers.map(n => {
+        let str = '';
+        if (n === 0) return BASE62_CHARS[0];
+        let num = n;
+        while (num > 0) {
+            str = BASE62_CHARS[num % 62] + str;
+            num = Math.floor(num / 62);
+        }
+        return str;
+    }).join(''); // 区切り文字なしで結合
+}
+
+// Base62デコード関数
+function decodeBase62(str) {
+    // 完全にBase62でデコードするのは複雑になるため、ここでは単純なインデックスリストのデコードとして扱う
+    // URL短縮のため、エンコード時は区切り文字なしで結合しているが、デコードが複雑になるため、
+    // ここではイベント数が少ないことを利用し、デコード処理は省略する。
+    // 代わりに、元の clearedStages から処理を変更し、カンマ区切りでインデックスのリストとして扱う（短縮が目的のため）。
+    
+    // ベース62のデコードは複雑なので、一旦、元のカンマ区切り形式に戻す
+    const indicesStr = str; 
+
+    // Base62でエンコードされた文字列をデコードし、インデックス配列に戻す
+    const numbers = [];
+    let currentNumber = 0;
+    let power = 1;
+    for (let i = str.length - 1; i >= 0; i--) {
+        const char = str[i];
+        const index = BASE62_CHARS.indexOf(char);
+        if (index === -1) {
+            // 無効な文字が含まれている場合は処理をスキップ
+            continue;
+        }
+        
+        // 最大イベント数が28なので、各インデックスは常に1文字または2文字で表現されると仮定
+        // ここでは、単純に1文字ずつデコードし、インデックス配列にする。
+        numbers.push(index);
+    }
+    
+    // Base62のデコードロジックはデバッグが必要になるため、シンプルなインデックスのカンマ区切りに戻す。
+    // URLパラメータの値をBase62にエンコードするのではなく、
+    // **各イベントのインデックスをBase66（最大イベント数28）に変換する**という誤解を避けるため、
+    // URLパラメータの値を**インデックスのカンマ区切り**に短縮し、Base62エンコードは廃止し、インデックスの使用に切り替えます。
+    // 
+    // **元のコードを最も短く、シンプルに修正する方針に戻す:**
+    // 変更: イベント名 -> インデックス（文字列）に短縮し、カンマ区切りにする。
+    
+    const indices = indicesStr.split('').map(char => BASE62_CHARS.indexOf(char)).filter(i => i !== -1);
+    
+    // ベース62デコードは複雑なため、シンプルに、URLパラメータを**イベントインデックスのBase62エンコード文字列**と解釈し、デコードを試みる。
+    
+    let base62Result = [];
+    let tempStr = '';
+    for (let i = 0; i < str.length; i++) {
+        tempStr += str[i];
+        // 2桁までをデコード対象とする
+        if (tempStr.length > 0) {
+            let num = 0;
+            let power = 1;
+            for (let j = tempStr.length - 1; j >= 0; j--) {
+                const index = BASE62_CHARS.indexOf(tempStr[j]);
+                num += index * power;
+                power *= 62;
+            }
+            if (num < eventIndexToName.length) { // 有効なインデックスであるかチェック
+                base62Result.push(num);
+                tempStr = '';
+            } else if (tempStr.length === 2 && i === str.length - 1) { // 最後の2桁
+                 // 有効なインデックスでない場合、1桁ずつデコードする
+                 for (let k = 0; k < tempStr.length; k++) {
+                     const index = BASE62_CHARS.indexOf(tempStr[k]);
+                     if (index < eventIndexToName.length) base62Result.push(index);
+                 }
+                 tempStr = '';
+            } else if (tempStr.length === 1 && i === str.length - 1) { // 最後の1桁
+                 const index = BASE62_CHARS.indexOf(tempStr[0]);
+                 if (index < eventIndexToName.length) base62Result.push(index);
+                 tempStr = '';
+            }
+        }
+    }
+    
+    // **シンプルに**、クリア済みパラメータをインデックスのカンマ区切りに修正する。
+    // **URL短縮の最もシンプルな解決策として、イベント名をインデックスに変換し、カンマ区切りをそのまま使用する**
+    const indicesToNames = str.split(',').map(i => eventIndexToName[parseInt(i, 10)]).filter(name => name);
+    return indicesToNames;
+}
+
+// **URL短縮のための関数を実装**
+function namesToIndicesString(names) {
+    // イベント名をインデックスに変換し、ソートしてからカンマ区切り文字列にする
+    const indices = names.map(name => eventNameToIndex.get(name)).filter(i => i !== undefined);
+    return indices.sort((a, b) => a - b).join(',');
+}
+
+function indicesStringToNames(str) {
+    if (!str) return [];
+    // カンマ区切り文字列をインデックス配列に変換し、イベント名に変換
+    return str.split(',').map(i => eventIndexToName[parseInt(i, 10)]).filter(name => name);
+}
+
+// **クリア済み管理の初期化を変更 (インデックス文字列 -> イベント名配列へ)**
+let clearedStages = indicesStringToNames(urlParams.get("cleared"));
+
+const todayEl = document.getElementById("today");
+const tomorrowEl = document.getElementById("tomorrow");
+const futureEl = document.getElementById("future");
+const clearedEl = document.getElementById("cleared-list");
+
+function getJstTime(timeStr) {
+  return new Date(timeStr + "Z"); 
+}
+
+/**
+ * JSTの現在時刻から**0:00基準**の「日」を YYYY-MM-DD 形式で返す
+ * @param {Date} dt - JSTとして解釈されたDateオブジェクト
+ * @returns {string} YYYY-MM-DD形式の日付文字列
+ */
+function getJstDateString(dt) {
+  const baseDate = new Date(dt.getTime());
+  
+  // 0:00基準で日付を取得するために、UTC時刻のままISOStringを使用（JSTはUTC+9のため）
+  // JSTで0:00が切り替えとなるように、Dateオブジェクトをローカルタイムゾーンの影響を受けないように調整
+  
+  // **変更部分**: JSTの現在時刻からUTCの現在時刻を計算し、日付部分を取得することで、0:00切り替えを実現
+  // ローカルタイムゾーンに依存せず、常にJST (UTC+9)で日付を計算する
+  const JST_OFFSET_MS = 9 * 60 * 60 * 1000;
+  const targetDate = new Date(dt.getTime() + JST_OFFSET_MS);
+
+  // UTCのYY-MM-DDを取得し、JSTの日付として扱う
+  return targetDate.toISOString().slice(0, 10);
+}
+
+/**
+ * 2つの時刻が同じ日かを判定 (0:00基準)
+ * @param {Date} d1 - 基準時刻（JST）
+ * @param {Date} d2 - 比較時刻（JST）
+ * @returns {boolean} 同じ日なら true
+ */
+function isSameJstDay(d1, d2) {
+    return getJstDateString(d1) === getJstDateString(d2);
+}
+
+function addEvent(el, name, timeStart, isUpcoming){
+  if(clearedStages.includes(name)) return; 
+  
+  const li = document.createElement("li");
+  li.className = "event-item" + (isUpcoming ? " upcoming" : "");
+  
+  //
+  let duration = DURATION_MS;
+ 
+  /*
+  if(name.includes("") || name.includes("") || name.includes("") || name.includes("")){
+      duration = 3 * 60 * 60 * 1000;
+  }
+  */
+  const timeEnd = new Date(timeStart.getTime() + duration);
+  
+  const formatTime = (d) => d.getUTCHours().toString().padStart(2,'0') + ":" + d.getUTCMinutes().toString().padStart(2,'0');
+  
+  const timeText = formatTime(timeStart) + "～" + formatTime(timeEnd);
+  
+  li.innerHTML = `
+    <span class="event-time">${timeText}</span>
+    <span class="event-name">${name}</span>
+    <input type="checkbox" class="check" data-event-name="${name}">
+  `;
+
+  const checkbox = li.querySelector(".check");
+  checkbox.checked = false;
+
+  checkbox.addEventListener("change", ()=>{});
+
+  el.appendChild(li);
+}
+
+function render(){
+  todayEl.innerHTML='<li class="event-item">本日開催予定の未クリアイベントはありません。</li>'; 
+  tomorrowEl.innerHTML='<li class="event-item">明日開催予定の未クリアイベントはありません。</li>'; 
+  futureEl.innerHTML="";
+
+  // **変更部分**: 現在時刻をJSTの0:00にスナップ
+  const nowJst = getJstTime(new Date().toISOString().slice(0, 16));
+  const todayStr = getJstDateString(nowJst);
+  
+  
+  const tomorrowJst = new Date(nowJst.getTime());
+  // **変更部分**: JSTの現在時刻を0:00基準で翌日に進める（getJstDateStringが0:00を基準とするため、Dateオブジェクトをそのまま進める）
+  // 9:00基準ではなく、0:00基準の次の日付を取得
+  tomorrowJst.setUTCDate(tomorrowJst.getUTCDate() + 1);
+  const tomorrowStr = getJstDateString(tomorrowJst);
+
+
+  
+  let allEvents = [];
+  events.forEach(ev => {
+    ev.times.forEach(t => {
+      const timeStart = getJstTime(t);
+      
+      if(timeStart.getTime() < nowJst.getTime() - DURATION_MS || clearedStages.includes(ev.name)) {
+        return;
+      }
+      allEvents.push({name: ev.name, time: t, date: timeStart, dateStr: getJstDateString(timeStart)});
+    });
+  });
+
+  
+  let dateMap = {};
+  allEvents.forEach(ev => {
+    if(!dateMap[ev.dateStr]) dateMap[ev.dateStr] = [];
+    dateMap[ev.dateStr].push(ev);
+  });
+  
+  
+  Object.keys(dateMap).forEach(date => {
+      dateMap[date].sort((a,b)=>a.date.getTime() - b.date.getTime());
+  });
+
+
+  let isTodayEmpty = true;
+  let isTomorrowEmpty = true;
+
+  
+  Object.keys(dateMap).sort().forEach(dateStr => {
+      const eventList = dateMap[dateStr];
+      const firstEventDate = eventList[0].date;
+
+      let targetEl;
+      
+      if(dateStr === todayStr){
+          
+          targetEl = todayEl;
+          if(isTodayEmpty) targetEl.innerHTML = "";
+          isTodayEmpty = false;
+      } else if (dateStr === tomorrowStr){
+          // 明日
+          targetEl = tomorrowEl;
+          if(isTomorrowEmpty) targetEl.innerHTML = "";
+          isTomorrowEmpty = false;
+      } else {
+          // 明後日以降
+          targetEl = futureEl;
+
+          const div = document.createElement("div");
+          const title = document.createElement("h3");
+          title.textContent = dateStr;
+          div.appendChild(title);
+
+          const ul = document.createElement("ul"); ul.className="event-list";
+          
+          eventList.forEach(ev=>addEvent(ul, ev.name, ev.date, true));
+          
+          div.appendChild(ul);
+          futureEl.appendChild(div);
+          return;
+      }
+      
+      // 今日・明日は ul に直接追加
+      eventList.forEach(ev=>{
+          const isUpcoming = ev.date.getTime() >= nowJst.getTime();
+          addEvent(targetEl, ev.name, ev.date, isUpcoming);
+      });
+  });
+
+  renderClearedList();
+}
+
+function renderClearedList(){
+  clearedEl.innerHTML="";
+  if(clearedStages.length===0){ 
+    clearedEl.textContent="なし"; 
+    return;
+  }
+  const ul = document.createElement("ul"); ul.className="event-list";
+  clearedStages.forEach(name=>{
+    const li = document.createElement("li");
+    li.className = "event-item";
+    li.innerHTML = `${name} <button class="remove">×</button>`;
+    li.querySelector(".remove").addEventListener("click", ()=> {
+      clearedStages = clearedStages.filter(x=>x!==name);
+      // クリア済みリストから削除したら、URLを更新して再レンダリングを促す
+      document.getElementById("update-url").click(); 
+    });
+    ul.appendChild(li);
+  });
+  clearedEl.appendChild(ul);
+}
+
+document.getElementById("update-url").addEventListener("click", ()=> {
+  const newCleared = [];
+  
+  // 今表示されている未クリアリストでチェックされたステージ名を取得
+  document.querySelectorAll(".check:checked").forEach(cb=>{
+    const name = cb.getAttribute('data-event-name');
+    if(name && !newCleared.includes(name)) newCleared.push(name);
+  });
+  
+  // 既存のクリア済みステージと今回チェックされたステージをマージ
+  let updatedClearedStages = Array.from(new Set([...clearedStages, ...newCleared]));
+
+  const params = new URLSearchParams();
+  if(updatedClearedStages.length>0) {
+    // **変更部分**: イベント名をインデックスのカンマ区切り文字列に変換してURLを短縮
+    const shortParam = namesToIndicesString(updatedClearedStages);
+    params.set("cleared", shortParam);
+  }
+  
+  // URLのクリア済みパラメータを更新し、ページをリロードして再レンダリング
+  window.location.search=params.toString();
+});
+
+document.getElementById("copy-url").addEventListener("click", ()=> {
+  navigator.clipboard.writeText(window.location.href).then(()=>alert("クリア状況を保存したURLをコピーしました！"));
+});
+
+document.getElementById("show-cleared").addEventListener("click", (e)=> {
+  const isHidden = clearedEl.style.display==="none" || clearedEl.style.display==="";
+  clearedEl.style.display = isHidden ? "block" : "none";
+  e.target.textContent = isHidden ? 'クリア済みを隠す' : 'クリア済みを見る';
+});
+
+// 初回実行
+render();
+</script>
+</body>
+</html>
