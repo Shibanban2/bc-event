@@ -83,7 +83,7 @@ h3 {
     flex-shrink: 0;
 }
 
-/* ボタン類 */
+
 .button-group {
     display: flex;
     gap: 8px;
@@ -95,7 +95,7 @@ button {
     border:none; 
     border-radius:5px; 
     cursor:pointer; 
-    background:#3498db; /* ボタンを青色に統一 */
+    background:#3498db; 
     color:#fff; 
     font-weight:600;
     transition: background 0.2s;
@@ -103,10 +103,10 @@ button {
 button:hover {
     background:#2980b9;
 }
-#update-url { background:#e67e22; } /* 反映ボタンをオレンジ系に */
+#update-url { background:#e67e22; } 
 #update-url:hover { background:#d35400; }
 
-/* クリア済みリスト */
+
 #cleared-list { 
     display:none; 
     margin-top:10px; 
@@ -127,7 +127,7 @@ button:hover {
     font-size: 0.8em;
 }
 
-/* レスポンシブ対応 */
+
 @media(max-width:600px){ 
     .event-item { font-size:0.9em; padding:10px; } 
     .event-time { margin-right:8px; min-width: 80px; } 
@@ -214,21 +214,21 @@ function getJstTime(timeStr) {
 }
 
 /**
- * 時刻dが属する「日」を YYYY-MM-DD 形式で返す (0:00基準)
- * @param {Date} dt - JSTとして解釈されたDateオブジェクト
- * @returns {string} YYYY-MM-DD形式の日付文字列
+ *
+ * @param {Date} 
+ * @returns {string} 
  */
 function getJstDateString(dt) {
   const baseDate = new Date(dt.getTime());
   
-  // 9時基準の調整ロジックを削除し、0:00基準（標準のUTC日付）を使用
-  // baseDate.setUTCHours(baseDate.getUTCHours() - JST_OFFSET_HOURS);
+  
+  // 
   
   return baseDate.toISOString().slice(0, 10);
 }
 
 /**
- * 2つの時刻が同じ日かを判定 (0:00基準)
+ * 
  * @param {Date} d1 - 基準時刻（JST）
  * @param {Date} d2 - 比較時刻（JST）
  * @returns {boolean} 同じ日なら true
@@ -243,9 +243,9 @@ function addEvent(el, name, timeStart, isUpcoming){
   const li = document.createElement("li");
   li.className = "event-item" + (isUpcoming ? " upcoming" : "");
   
-  // 終了時刻の計算 (イベント時間帯の表示)
+  //
   let duration = DURATION_MS;
-  // 3時間設定の個別処理を削除
+ 
   /*
   if(name.includes("") || name.includes("") || name.includes("") || name.includes("")){
       duration = 3 * 60 * 60 * 1000;
@@ -279,18 +279,18 @@ function render(){
   const nowJst = getJstTime(new Date().toISOString().slice(0, 16));
   const todayStr = getJstDateString(nowJst);
   
-  // 0:00基準の「明日」のDateオブジェクト（比較用）
+  
   const tomorrowJst = new Date(nowJst.getTime());
   tomorrowJst.setUTCDate(tomorrowJst.getUTCDate() + 1);
   const tomorrowStr = getJstDateString(tomorrowJst);
 
 
-  // 全イベントをフラット化し、日付でグルーピング
+  
   let allEvents = [];
   events.forEach(ev => {
     ev.times.forEach(t => {
       const timeStart = getJstTime(t);
-      // 過去のイベント、またはクリア済みのステージは除外
+      
       if(timeStart.getTime() < nowJst.getTime() - DURATION_MS || clearedStages.includes(ev.name)) {
         return;
       }
@@ -298,14 +298,14 @@ function render(){
     });
   });
 
-  // 日付ごとにイベントを分類し、ソート
+  
   let dateMap = {};
   allEvents.forEach(ev => {
     if(!dateMap[ev.dateStr]) dateMap[ev.dateStr] = [];
     dateMap[ev.dateStr].push(ev);
   });
   
-  // ソート処理: 現在時刻に近い順（時間が古い順）にソート
+  
   Object.keys(dateMap).forEach(date => {
       dateMap[date].sort((a,b)=>a.date.getTime() - b.date.getTime());
   });
@@ -314,7 +314,7 @@ function render(){
   let isTodayEmpty = true;
   let isTomorrowEmpty = true;
 
-  // 分類と表示
+  
   Object.keys(dateMap).sort().forEach(dateStr => {
       const eventList = dateMap[dateStr];
       const firstEventDate = eventList[0].date;
@@ -322,7 +322,7 @@ function render(){
       let targetEl;
       
       if(dateStr === todayStr){
-          // 今日
+          
           targetEl = todayEl;
           if(isTodayEmpty) targetEl.innerHTML = "";
           isTodayEmpty = false;
