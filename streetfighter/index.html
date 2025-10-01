@@ -4,50 +4,68 @@
   <meta charset="UTF-8">
   <title>New Challenger スケジュール</title>
   <style>
-    body { font-family: sans-serif; background: #f5f5f5; margin: 20px; }
+    body { font-family: sans-serif; background: #f5f5f5; margin: 10px; }
     h1 { text-align: center; }
-    .stage-card { background: #fff; border-radius: 12px; padding: 15px; margin: 10px 0; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
-    .stage-header { font-size: 18px; font-weight: bold; margin-bottom: 5px; }
-    .time { color: #555; margin: 3px 0; }
-    .next { background: #e0f7fa; }
+    .grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    @media(min-width: 768px){ .grid { grid-template-columns: 1fr 1fr; } }
+    .stage-card { background: #fff; border-radius: 12px; padding: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+    .stage-header { font-size: 18px; font-weight: bold; margin-bottom: 8px; }
+    .time { color: #555; margin: 3px 0; font-size: 14px; }
+    .highlight { border: 2px solid #0288d1; background: #e1f5fe; grid-column: 1 / -1; font-size: 20px; }
+    label { display: block; margin-top: 8px; }
   </style>
 </head>
 <body>
 <h1>New Challenger スケジュール</h1>
-<div id="list"></div>
+<div id="list" class="grid"></div>
 
 <script>
-// スケジュールデータ（例：一部のみ）
+// スケジュールデータ（ステージごとにまとめる）
 const stages = [
-  { id:"ryu-easy-1", name:"VSリュウ 初級", date:"2025-10-05", start:"12:00", end:"14:00" },
-  { id:"ryu-easy-2", name:"VSリュウ 初級", date:"2025-10-06", start:"03:00", end:"05:00" },
-  { id:"ryu-hard-1", name:"VSリュウ 激ムズ", date:"2025-10-04", start:"18:00", end:"20:00" },
-  { id:"guile-easy-1", name:"VSガイル 初級", date:"2025-10-08", start:"03:00", end:"05:00" },
-  { id:"guile-hard-1", name:"VSガイル 激ムズ", date:"2025-10-04", start:"12:00", end:"14:00" },
+  { id:"ryu-easy", name:"VSリュウ 初級", times:[
+    {date:"2025-10-05", start:"12:00", end:"14:00"},
+    {date:"2025-10-06", start:"03:00", end:"05:00"},
+    {date:"2025-10-11", start:"18:00", end:"20:00"}
+  ]},
+  { id:"ryu-hard", name:"VSリュウ 激ムズ", times:[
+    {date:"2025-10-04", start:"18:00", end:"20:00"},
+    {date:"2025-10-06", start:"12:00", end:"14:00"}
+  ]},
+  { id:"guile-easy", name:"VSガイル 初級", times:[
+    {date:"2025-10-08", start:"03:00", end:"05:00"},
+    {date:"2025-10-11", start:"12:00", end:"14:00"}
+  ]},
+  { id:"guile-hard", name:"VSガイル 激ムズ", times:[
+    {date:"2025-10-04", start:"12:00", end:"14:00"},
+    {date:"2025-10-08", start:"12:00", end:"14:00"}
+  ]},
 ];
 
 // URLパラメータからクリア済みを取得
 const urlParams = new URLSearchParams(window.location.search);
 const cleared = (urlParams.get("clear")||"").split(",");
 
-// 未クリア＆未来のみを抽出
 const now = new Date();
-let upcoming = stages.filter(s => {
-  const start = new Date(`${s.date}T${s.start}:00`);
-  return start > now && !cleared.includes(s.id);
-});
 
-// 開催時刻でソート
-upcoming.sort((a,b)=> new Date(`${a.date}T${a.start}:00`) - new Date(`${b.date}T${b.start}:00`));
+// ステージごとに最も近い開催を探す
+let upcoming = stages.map(stage => {
+  const futureTimes = stage.times.filter(t => new Date(`${t.date}T${t.start}:00`) > now);
+  if(futureTimes.length === 0) return null;
+  futureTimes.sort((a,b)=> new Date(`${a.date}T${a.start}:00`) - new Date(`${b.date}T${b.start}:00`));
+  return { id:stage.id, name:stage.name, next:futureTimes[0] };
+}).filter(x => x && !cleared.includes(x.id));
+
+// 開催が近い順に並べる
+upcoming.sort((a,b)=> new Date(`${a.next.date}T${a.next.start}:00`) - new Date(`${b.next.date}T${b.next.start}:00`));
 
 // 表示
 const list = document.getElementById("list");
 upcoming.forEach((s,i)=>{
   const card = document.createElement("div");
-  card.className = "stage-card" + (i===0 ? " next" : "");
+  card.className = "stage-card" + (i===0 ? " highlight" : "");
   card.innerHTML = `
     <div class="stage-header">${s.name}</div>
-    <div class="time">${s.date} ${s.start}〜${s.end}</div>
+    <div class="time">${s.next.date} ${s.next.start}〜${s.next.end}</div>
     <label><input type="checkbox" onchange="toggleClear('${s.id}')"> クリア済みにする</label>
   `;
   list.appendChild(card);
