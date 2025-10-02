@@ -63,7 +63,6 @@ h3 {
     border-left:6px solid #e74c3c; 
 }
 
-/* イベント時刻 */
 .event-time { 
     font-weight:bold; 
     margin-right:15px; 
@@ -225,36 +224,24 @@ const futureEl = document.getElementById("future");
 const clearedEl = document.getElementById("cleared-list");
 
 function getJstTime(timeStr) {
-  // **修正**: イベント時刻文字列をローカルタイムゾーン（JST）として解釈させるため、末尾の"Z"を削除
-  // Date()はタイムゾーン指定がない場合、ローカルタイムゾーンとして解釈する
   return new Date(timeStr); 
 }
 
-/**
- * JSTの現在時刻から**0:00基準**の「日」を YYYY-MM-DD 形式で返す
- * @param {Date} dt - JSTとして解釈されたDateオブジェクト
- * @returns {string} YYYY-MM-DD形式の日付文字列
- */
+
 function getJstDateString(dt) {
-  // **修正**: JSTのDateオブジェクトの時刻を00:00:00に設定し、その日付部分をISO形式で取得
+ 
   const baseDate = new Date(dt.getTime());
-  baseDate.setHours(0, 0, 0, 0); // JSTの時刻を0:00に設定
+  baseDate.setHours(0, 0, 0, 0);
   
-  // toISOString()はUTC時間として出力するため、ローカルタイムゾーンの影響を受けずに日付部分（YYYY-MM-DD）を取得するために
-  // 一旦、JSTの0:00をUTCに変換して日付部分を抽出する。
+
   const JST_OFFSET_MS = 9 * 60 * 60 * 1000;
   const targetDate = new Date(baseDate.getTime() + JST_OFFSET_MS);
 
-  // UTCのYY-MM-DDを取得し、JSTの日付として扱う
+ 
   return targetDate.toISOString().slice(0, 10);
 }
 
-/**
- * 2つの時刻が同じ日かを判定 (0:00基準)
- * @param {Date} d1 - 基準時刻（JST）
- * @param {Date} d2 - 比較時刻（JST）
- * @returns {boolean} 同じ日なら true
- */
+
 function isSameJstDay(d1, d2) {
     return getJstDateString(d1) === getJstDateString(d2);
 }
@@ -268,14 +255,10 @@ function addEvent(el, name, timeStart, isUpcoming){
   //
   let duration = DURATION_MS;
  
-  /*
-  if(name.includes("") || name.includes("") || name.includes("") || name.includes("")){
-      duration = 3 * 60 * 60 * 1000;
-  }
-  */
+  
   const timeEnd = new Date(timeStart.getTime() + duration);
   
-  // **修正**: 表示時刻をローカルタイム（JST）で正しくフォーマット
+ 
   const formatTime = (d) => d.getHours().toString().padStart(2,'0') + ":" + d.getMinutes().toString().padStart(2,'0');
   
   const timeText = formatTime(timeStart) + "～" + formatTime(timeEnd);
@@ -295,18 +278,18 @@ function addEvent(el, name, timeStart, isUpcoming){
 }
 
 function render(){
-  // 初期化
+  
   todayEl.innerHTML = ''; 
   tomorrowEl.innerHTML = '';
   futureEl.innerHTML = "";
 
-  // **修正**: 現在時刻のDateオブジェクトをJSTとして取得
+  
   const nowJst = new Date(); 
   
-  // 0:00基準で今日の日付文字列を取得
+  
   const todayStr = getJstDateString(nowJst);
   
-  // 明日の日付文字列を取得
+  
   const tomorrowJst = new Date(nowJst.getTime());
   tomorrowJst.setDate(tomorrowJst.getDate() + 1); 
   const tomorrowStr = getJstDateString(tomorrowJst);
@@ -417,23 +400,23 @@ function renderClearedList(){
 document.getElementById("update-url").addEventListener("click", ()=> {
   const newCleared = [];
   
-  // 今表示されている未クリアリストでチェックされたステージ名を取得
+
   document.querySelectorAll(".check:checked").forEach(cb=>{
     const name = cb.getAttribute('data-event-name');
     if(name && !newCleared.includes(name)) newCleared.push(name);
   });
   
-  // 既存のクリア済みステージと今回チェックされたステージをマージ
+
   let updatedClearedStages = Array.from(new Set([...clearedStages, ...newCleared]));
 
   const params = new URLSearchParams();
   if(updatedClearedStages.length>0) {
-    // イベント名をインデックスのカンマ区切り文字列に変換してURLを短縮
+
     const shortParam = namesToIndicesString(updatedClearedStages);
     params.set("cleared", shortParam);
   }
   
-  // URLのクリア済みパラメータを更新し、ページをリロードして再レンダリング
+
   window.location.search=params.toString();
 });
 
@@ -447,7 +430,6 @@ document.getElementById("show-cleared").addEventListener("click", (e)=> {
   e.target.textContent = isHidden ? 'クリア済みを隠す' : 'クリア済みを見る';
 });
 
-// 初回実行
 render();
 </script>
 </body>
