@@ -4,6 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>New Challenger</title>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-W046BB3T6D"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-W046BB3T6D');
+</script>
 <style>
 
 body { 
@@ -63,7 +72,6 @@ h3 {
     border-left:6px solid #e74c3c; 
 }
 
-/* イベント時刻 */
 .event-time { 
     font-weight:bold; 
     margin-right:15px; 
@@ -201,8 +209,23 @@ const events =[
 
 const DURATION_MS = 2 * 60 * 60 * 1000; 
 
+// URL短縮のためのマップ
+const eventNameToIndex = new Map(events.map((e, i) => [e.name, i]));
+const eventIndexToName = events.map(e => e.name);
+
+// URL短縮のための関数 (インデックスのカンマ区切り)
+function namesToIndicesString(names) {
+    const indices = names.map(name => eventNameToIndex.get(name)).filter(i => i !== undefined);
+    return indices.sort((a, b) => a - b).join(',');
+}
+
+function indicesStringToNames(str) {
+    if (!str) return [];
+    return str.split(',').map(i => eventIndexToName[parseInt(i, 10)]).filter(name => name);
+}
+
 let urlParams = new URLSearchParams(window.location.search);
-let clearedStages = urlParams.get("cleared") ? urlParams.get("cleared").split(",") : [];
+let clearedStages = indicesStringToNames(urlParams.get("cleared"));
 
 const todayEl = document.getElementById("today");
 const tomorrowEl = document.getElementById("tomorrow");
@@ -210,26 +233,24 @@ const futureEl = document.getElementById("future");
 const clearedEl = document.getElementById("cleared-list");
 
 function getJstTime(timeStr) {
-  return new Date(timeStr + "Z"); 
+  return new Date(timeStr); 
 }
 
-/**
- *
- * @param {Date} 
- * @returns {string} 
- */
+
 function getJstDateString(dt) {
+ 
   const baseDate = new Date(dt.getTime());
+  baseDate.setHours(0, 0, 0, 0);
   
-  return baseDate.toISOString().slice(0, 10);
+
+  const JST_OFFSET_MS = 9 * 60 * 60 * 1000;
+  const targetDate = new Date(baseDate.getTime() + JST_OFFSET_MS);
+
+ 
+  return targetDate.toISOString().slice(0, 10);
 }
 
-/**
- * 
- * @param {Date} d1 - 基準時刻（JST）
- * @param {Date} d2 - 比較時刻（JST）
- * @returns {boolean} 同じ日なら true
- */
+
 function isSameJstDay(d1, d2) {
     return getJstDateString(d1) === getJstDateString(d2);
 }
@@ -243,14 +264,11 @@ function addEvent(el, name, timeStart, isUpcoming){
   //
   let duration = DURATION_MS;
  
-  /*
-  if(name.includes("") || name.includes("") || name.includes("") || name.includes("")){
-      duration = 3 * 60 * 60 * 1000;
-  }
-  */
+  
   const timeEnd = new Date(timeStart.getTime() + duration);
   
-  const formatTime = (d) => d.getUTCHours().toString().padStart(2,'0') + ":" + d.getUTCMinutes().toString().padStart(2,'0');
+ 
+  const formatTime = (d) => d.getHours().toString().padStart(2,'0') + ":" + d.getMinutes().toString().padStart(2,'0');
   
   const timeText = formatTime(timeStart) + "～" + formatTime(timeEnd);
   
@@ -269,16 +287,20 @@ function addEvent(el, name, timeStart, isUpcoming){
 }
 
 function render(){
-  todayEl.innerHTML='<li class="event-item">本日開催予定の未クリアイベントはありません。</li>'; 
-  tomorrowEl.innerHTML='<li class="event-item">明日開催予定の未クリアイベントはありません。</li>'; 
-  futureEl.innerHTML="";
+  
+  todayEl.innerHTML = ''; 
+  tomorrowEl.innerHTML = '';
+  futureEl.innerHTML = "";
 
-  const nowJst = getJstTime(new Date().toISOString().slice(0, 16));
+  
+  const nowJst = new Date(); 
+  
+  
   const todayStr = getJstDateString(nowJst);
   
   
   const tomorrowJst = new Date(nowJst.getTime());
-  tomorrowJst.setUTCDate(tomorrowJst.getUTCDate() + 1);
+  tomorrowJst.setDate(tomorrowJst.getDate() + 1); 
   const tomorrowStr = getJstDateString(tomorrowJst);
 
 
@@ -321,12 +343,10 @@ function render(){
       if(dateStr === todayStr){
           
           targetEl = todayEl;
-          if(isTodayEmpty) targetEl.innerHTML = "";
           isTodayEmpty = false;
       } else if (dateStr === tomorrowStr){
           // 明日
           targetEl = tomorrowEl;
-          if(isTomorrowEmpty) targetEl.innerHTML = "";
           isTomorrowEmpty = false;
       } else {
           // 明後日以降
@@ -352,6 +372,15 @@ function render(){
           addEvent(targetEl, ev.name, ev.date, isUpcoming);
       });
   });
+  
+  // イベントがなかった場合、メッセージを表示
+  if (isTodayEmpty) {
+    todayEl.innerHTML='<li class="event-item">本日開催予定の未クリアイベントはありません。</li>';
+  }
+  if (isTomorrowEmpty) {
+    tomorrowEl.innerHTML='<li class="event-item">明日開催予定の未クリアイベントはありません。</li>';
+  }
+
 
   renderClearedList();
 }
@@ -380,23 +409,23 @@ function renderClearedList(){
 document.getElementById("update-url").addEventListener("click", ()=> {
   const newCleared = [];
   
-  // 今表示されている未クリアリストでチェックされたステージ名を取得
+
   document.querySelectorAll(".check:checked").forEach(cb=>{
     const name = cb.getAttribute('data-event-name');
     if(name && !newCleared.includes(name)) newCleared.push(name);
   });
   
-  // 既存のクリア済みステージと今回チェックされたステージをマージ
+
   let updatedClearedStages = Array.from(new Set([...clearedStages, ...newCleared]));
 
   const params = new URLSearchParams();
   if(updatedClearedStages.length>0) {
-    // 常にソートしてURLをきれいに保つ
-    updatedClearedStages.sort();
-    params.set("cleared", updatedClearedStages.join(","));
+
+    const shortParam = namesToIndicesString(updatedClearedStages);
+    params.set("cleared", shortParam);
   }
   
-  // URLのクリア済みパラメータを更新し、ページをリロードして再レンダリング
+
   window.location.search=params.toString();
 });
 
@@ -410,7 +439,6 @@ document.getElementById("show-cleared").addEventListener("click", (e)=> {
   e.target.textContent = isHidden ? 'クリア済みを隠す' : 'クリア済みを見る';
 });
 
-// 初回実行
 render();
 </script>
 </body>
