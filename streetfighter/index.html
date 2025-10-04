@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>New Challenger</title>
-<!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-W046BB3T6D"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
@@ -71,6 +70,17 @@ h3 {
 .event-item.upcoming { 
     border-left:6px solid #e74c3c; 
 }
+/* 過去のイベントのスタイル */
+.event-item.past {
+    background: #e0e0e0;
+    color: #7f8c8d;
+    border-left: 6px solid #95a5a6;
+    opacity: 0.8;
+}
+/* 過去イベントでクリア済みのチェックマークは少し目立たせる */
+.event-item.past .check:checked {
+    accent-color: #2ecc71; /* クリア済みチェックの色を少し変える */
+}
 
 .event-time { 
     font-weight:bold; 
@@ -79,6 +89,10 @@ h3 {
     flex-shrink: 0; 
     min-width: 100px;
 }
+.event-item.past .event-time {
+    color: #6d6d6d;
+}
+
 .event-name {
     flex-grow: 1;
 }
@@ -113,6 +127,8 @@ button:hover {
 }
 #update-url { background:#e67e22; } 
 #update-url:hover { background:#d35400; }
+#show-past { background:#8e44ad; }
+#show-past:hover { background:#6d338a; }
 
 
 #cleared-list { 
@@ -135,6 +151,16 @@ button:hover {
     font-size: 0.8em;
 }
 
+/* 過去イベントセクションを非表示に */
+#past-events-section {
+    display: none;
+    margin-top: 15px;
+}
+#past-events-content {
+    padding: 10px;
+    background: #ecf0f1;
+    border-radius: 5px;
+}
 
 @media(max-width:600px){ 
     .event-item { font-size:0.9em; padding:10px; } 
@@ -152,8 +178,16 @@ button:hover {
     <button id="update-url">クリアを反映・URL更新</button>
     <button id="copy-url">URLをコピー</button>
     <button id="show-cleared">クリア済みを見る</button>
+    <button id="show-past">過去のイベントを見る</button> 
   </div>
   <div id="cleared-list"></div>
+</section>
+
+<section id="past-events-section">
+  <h2>終了した過去のイベント</h2>
+  <div id="past-events-content">
+    <div id="past"></div>
+  </div>
 </section>
 
 <section>
@@ -231,6 +265,10 @@ const todayEl = document.getElementById("today");
 const tomorrowEl = document.getElementById("tomorrow");
 const futureEl = document.getElementById("future");
 const clearedEl = document.getElementById("cleared-list");
+// 過去イベントのDOM要素
+const pastEventsSectionEl = document.getElementById("past-events-section");
+const pastEl = document.getElementById("past");
+
 
 function getJstTime(timeStr) {
   return new Date(timeStr); 
@@ -238,15 +276,12 @@ function getJstTime(timeStr) {
 
 
 function getJstDateString(dt) {
- 
   const baseDate = new Date(dt.getTime());
   baseDate.setHours(0, 0, 0, 0);
   
-
   const JST_OFFSET_MS = 9 * 60 * 60 * 1000;
   const targetDate = new Date(baseDate.getTime() + JST_OFFSET_MS);
 
- 
   return targetDate.toISOString().slice(0, 10);
 }
 
@@ -255,33 +290,41 @@ function isSameJstDay(d1, d2) {
     return getJstDateString(d1) === getJstDateString(d2);
 }
 
-function addEvent(el, name, timeStart, isUpcoming){
-  if(clearedStages.includes(name)) return; 
+/**
+ * イベント要素を作成して追加する関数
+ * @param {HTMLElement} el - イベントを追加するDOM要素
+ * @param {string} name - イベント名
+ * @param {Date} timeStart - イベント開始時刻
+ * @param {boolean} isUpcoming - 開催前か
+ * @param {boolean} isPast - 過去イベントか
+ */
+function addEvent(el, name, timeStart, isUpcoming, isPast = false){
+  // 過去イベントではない、かつクリア済みの場合、未クリアリストには追加しない
+  if (!isPast && clearedStages.includes(name)) return; 
   
   const li = document.createElement("li");
-  li.className = "event-item" + (isUpcoming ? " upcoming" : "");
+  li.className = "event-item" + (isUpcoming ? " upcoming" : "") + (isPast ? " past" : "");
   
-  //
   let duration = DURATION_MS;
- 
-  
   const timeEnd = new Date(timeStart.getTime() + duration);
   
- 
   const formatTime = (d) => d.getHours().toString().padStart(2,'0') + ":" + d.getMinutes().toString().padStart(2,'0');
   
   const timeText = formatTime(timeStart) + "～" + formatTime(timeEnd);
   
+  // チェックボックスを生成 (過去イベントでもチェックできるように)
+  const isCleared = clearedStages.includes(name);
+
   li.innerHTML = `
     <span class="event-time">${timeText}</span>
     <span class="event-name">${name}</span>
-    <input type="checkbox" class="check" data-event-name="${name}">
+    <input type="checkbox" class="check" data-event-name="${name}" ${isCleared ? 'checked' : ''}>
   `;
 
+  // チェックボックスのリスナーを追加
   const checkbox = li.querySelector(".check");
-  checkbox.checked = false;
-
   checkbox.addEventListener("change", ()=>{});
+
 
   el.appendChild(li);
 }
@@ -291,6 +334,7 @@ function render(){
   todayEl.innerHTML = ''; 
   tomorrowEl.innerHTML = '';
   futureEl.innerHTML = "";
+  pastEl.innerHTML = ""; 
 
   
   const nowJst = new Date(); 
@@ -305,38 +349,58 @@ function render(){
 
 
   
-  let allEvents = [];
+  let currentOrFutureEvents = [];
+  let pastEvents = []; 
+
   events.forEach(ev => {
     ev.times.forEach(t => {
       const timeStart = getJstTime(t);
+      const timeEnd = new Date(timeStart.getTime() + DURATION_MS);
       
-      if(timeStart.getTime() < nowJst.getTime() - DURATION_MS || clearedStages.includes(ev.name)) {
-        return;
+      // 終了したイベント
+      if(timeEnd.getTime() < nowJst.getTime()) {
+        // 過去イベントはクリア状況に関わらずリストアップ
+        pastEvents.push({name: ev.name, time: t, date: timeStart, dateStr: getJstDateString(timeStart)});
+        return; 
       }
-      allEvents.push({name: ev.name, time: t, date: timeStart, dateStr: getJstDateString(timeStart)});
+
+      // 開催中/開催予定のイベント
+      currentOrFutureEvents.push({name: ev.name, time: t, date: timeStart, dateStr: getJstDateString(timeStart)});
+      
     });
   });
 
   
   let dateMap = {};
-  allEvents.forEach(ev => {
+  currentOrFutureEvents.forEach(ev => {
     if(!dateMap[ev.dateStr]) dateMap[ev.dateStr] = [];
     dateMap[ev.dateStr].push(ev);
   });
   
+  // 過去イベントのマップ
+  let pastDateMap = {};
+  pastEvents.forEach(ev => {
+    if(!pastDateMap[ev.dateStr]) pastDateMap[ev.dateStr] = [];
+    pastDateMap[ev.dateStr].push(ev);
+  });
   
+  
+  // イベントリストのソート
   Object.keys(dateMap).forEach(date => {
       dateMap[date].sort((a,b)=>a.date.getTime() - b.date.getTime());
+  });
+  Object.keys(pastDateMap).forEach(date => {
+      // 過去イベントは日付降順、時間昇順
+      pastDateMap[date].sort((a,b)=>a.date.getTime() - b.date.getTime()); 
   });
 
 
   let isTodayEmpty = true;
   let isTomorrowEmpty = true;
 
-  
+  // 未クリアイベントの描画 (クリア済みは addEvent 側でフィルタリングされる)
   Object.keys(dateMap).sort().forEach(dateStr => {
       const eventList = dateMap[dateStr];
-      const firstEventDate = eventList[0].date;
 
       let targetEl;
       
@@ -372,6 +436,23 @@ function render(){
           addEvent(targetEl, ev.name, ev.date, isUpcoming);
       });
   });
+
+  // 過去イベントの描画 (日付の降順)
+  Object.keys(pastDateMap).sort().reverse().forEach(dateStr => {
+    const eventList = pastDateMap[dateStr];
+
+    const div = document.createElement("div");
+    const title = document.createElement("h3");
+    title.textContent = dateStr;
+    div.appendChild(title);
+
+    const ul = document.createElement("ul"); ul.className="event-list";
+    
+    eventList.forEach(ev=>addEvent(ul, ev.name, ev.date, false, true)); // isPast = true
+    
+    div.appendChild(ul);
+    pastEl.appendChild(div);
+  });
   
   // イベントがなかった場合、メッセージを表示
   if (isTodayEmpty) {
@@ -379,6 +460,9 @@ function render(){
   }
   if (isTomorrowEmpty) {
     tomorrowEl.innerHTML='<li class="event-item">明日開催予定の未クリアイベントはありません。</li>';
+  }
+  if(pastEvents.length === 0){
+    pastEl.innerHTML='<li class="event-item">表示できる過去のイベントはありません。</li>';
   }
 
 
@@ -409,14 +493,14 @@ function renderClearedList(){
 document.getElementById("update-url").addEventListener("click", ()=> {
   const newCleared = [];
   
-
+  // 開催中のイベント、開催予定のイベント、過去のイベントすべてからチェック済みのステージ名を取得
   document.querySelectorAll(".check:checked").forEach(cb=>{
     const name = cb.getAttribute('data-event-name');
     if(name && !newCleared.includes(name)) newCleared.push(name);
   });
   
-
-  let updatedClearedStages = Array.from(new Set([...clearedStages, ...newCleared]));
+  // 既存のクリア済みステージと今回チェックされたステージをマージ
+  let updatedClearedStages = Array.from(new Set(newCleared)); // clearedStages はここでリセット
 
   const params = new URLSearchParams();
   if(updatedClearedStages.length>0) {
@@ -425,7 +509,7 @@ document.getElementById("update-url").addEventListener("click", ()=> {
     params.set("cleared", shortParam);
   }
   
-
+  // URLのクリア済みパラメータを更新し、ページをリロードして再レンダリング
   window.location.search=params.toString();
 });
 
@@ -437,6 +521,13 @@ document.getElementById("show-cleared").addEventListener("click", (e)=> {
   const isHidden = clearedEl.style.display==="none" || clearedEl.style.display==="";
   clearedEl.style.display = isHidden ? "block" : "none";
   e.target.textContent = isHidden ? 'クリア済みを隠す' : 'クリア済みを見る';
+});
+
+// 過去のイベント表示/非表示切り替え機能
+document.getElementById("show-past").addEventListener("click", (e)=> {
+    const isHidden = pastEventsSectionEl.style.display === "none" || pastEventsSectionEl.style.display === "";
+    pastEventsSectionEl.style.display = isHidden ? "block" : "none";
+    e.target.textContent = isHidden ? '過去のイベントを隠す' : '過去のイベントを見る';
 });
 
 render();
