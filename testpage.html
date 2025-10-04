@@ -77,6 +77,10 @@ h3 {
     border-left: 6px solid #95a5a6;
     opacity: 0.8;
 }
+/* 過去イベントでクリア済みのチェックマークは少し目立たせる */
+.event-item.past .check:checked {
+    accent-color: #2ecc71; /* クリア済みチェックの色を少し変える */
+}
 
 .event-time { 
     font-weight:bold; 
@@ -295,7 +299,7 @@ function isSameJstDay(d1, d2) {
  * @param {boolean} isPast - 過去イベントか
  */
 function addEvent(el, name, timeStart, isUpcoming, isPast = false){
-  // 未クリアリストの場合のみ、クリア済みイベントを除外
+  // 過去イベントではない、かつクリア済みの場合、未クリアリストには追加しない
   if (!isPast && clearedStages.includes(name)) return; 
   
   const li = document.createElement("li");
@@ -308,18 +312,18 @@ function addEvent(el, name, timeStart, isUpcoming, isPast = false){
   
   const timeText = formatTime(timeStart) + "～" + formatTime(timeEnd);
   
+  // チェックボックスを生成 (過去イベントでもチェックできるように)
+  const isCleared = clearedStages.includes(name);
+
   li.innerHTML = `
     <span class="event-time">${timeText}</span>
     <span class="event-name">${name}</span>
-    ${isPast ? '' : `<input type="checkbox" class="check" data-event-name="${name}">`}
+    <input type="checkbox" class="check" data-event-name="${name}" ${isCleared ? 'checked' : ''}>
   `;
 
-  // 未クリアリストの場合のみ、チェックボックスのリスナーを追加
-  if(!isPast) {
-    const checkbox = li.querySelector(".check");
-    checkbox.checked = false;
-    checkbox.addEventListener("change", ()=>{});
-  }
+  // チェックボックスのリスナーを追加
+  const checkbox = li.querySelector(".check");
+  checkbox.addEventListener("change", ()=>{});
 
 
   el.appendChild(li);
@@ -330,7 +334,7 @@ function render(){
   todayEl.innerHTML = ''; 
   tomorrowEl.innerHTML = '';
   futureEl.innerHTML = "";
-  pastEl.innerHTML = ""; // 過去イベントリストも初期化
+  pastEl.innerHTML = ""; 
 
   
   const nowJst = new Date(); 
@@ -345,8 +349,8 @@ function render(){
 
 
   
-  let allEvents = [];
-  let pastEvents = []; // 過去イベントを格納する配列
+  let currentOrFutureEvents = [];
+  let pastEvents = []; 
 
   events.forEach(ev => {
     ev.times.forEach(t => {
@@ -355,20 +359,20 @@ function render(){
       
       // 終了したイベント
       if(timeEnd.getTime() < nowJst.getTime()) {
+        // 過去イベントはクリア状況に関わらずリストアップ
         pastEvents.push({name: ev.name, time: t, date: timeStart, dateStr: getJstDateString(timeStart)});
         return; 
       }
 
-      // 未クリアリストに表示するイベント (開催中/開催予定)
-      if (!clearedStages.includes(ev.name)) {
-        allEvents.push({name: ev.name, time: t, date: timeStart, dateStr: getJstDateString(timeStart)});
-      }
+      // 開催中/開催予定のイベント
+      currentOrFutureEvents.push({name: ev.name, time: t, date: timeStart, dateStr: getJstDateString(timeStart)});
+      
     });
   });
 
   
   let dateMap = {};
-  allEvents.forEach(ev => {
+  currentOrFutureEvents.forEach(ev => {
     if(!dateMap[ev.dateStr]) dateMap[ev.dateStr] = [];
     dateMap[ev.dateStr].push(ev);
   });
@@ -386,14 +390,15 @@ function render(){
       dateMap[date].sort((a,b)=>a.date.getTime() - b.date.getTime());
   });
   Object.keys(pastDateMap).forEach(date => {
-      pastDateMap[date].sort((a,b)=>b.date.getTime() - a.date.getTime()); // 過去イベントは降順
+      // 過去イベントは日付降順、時間昇順
+      pastDateMap[date].sort((a,b)=>a.date.getTime() - b.date.getTime()); 
   });
 
 
   let isTodayEmpty = true;
   let isTomorrowEmpty = true;
 
-  // 未クリアイベントの描画
+  // 未クリアイベントの描画 (クリア済みは addEvent 側でフィルタリングされる)
   Object.keys(dateMap).sort().forEach(dateStr => {
       const eventList = dateMap[dateStr];
 
@@ -488,13 +493,14 @@ function renderClearedList(){
 document.getElementById("update-url").addEventListener("click", ()=> {
   const newCleared = [];
   
+  // 開催中のイベント、開催予定のイベント、過去のイベントすべてからチェック済みのステージ名を取得
   document.querySelectorAll(".check:checked").forEach(cb=>{
     const name = cb.getAttribute('data-event-name');
     if(name && !newCleared.includes(name)) newCleared.push(name);
   });
   
-
-  let updatedClearedStages = Array.from(new Set([...clearedStages, ...newCleared]));
+  // 既存のクリア済みステージと今回チェックされたステージをマージ
+  let updatedClearedStages = Array.from(new Set(newCleared)); // clearedStages はここでリセット
 
   const params = new URLSearchParams();
   if(updatedClearedStages.length>0) {
@@ -503,6 +509,7 @@ document.getElementById("update-url").addEventListener("click", ()=> {
     params.set("cleared", shortParam);
   }
   
+  // URLのクリア済みパラメータを更新し、ページをリロードして再レンダリング
   window.location.search=params.toString();
 });
 
