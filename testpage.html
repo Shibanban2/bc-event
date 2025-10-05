@@ -500,6 +500,7 @@ document.getElementById("update-url").addEventListener("click", ()=> {
         const name = cb.getAttribute('data-event-name');
         if (!name) return;
 
+        // ステージ名ごとのチェック状態を収集（重複排除）
         if (cb.checked) {
             checkedStagesOnScreen.add(name);
         } else {
@@ -511,17 +512,19 @@ document.getElementById("update-url").addEventListener("click", ()=> {
     
     // 1. 全ステージ名をループし、最終的なクリア状態を決定
     allStages.forEach(stageName => {
-        // A. 画面上のチェックボックスが一つでもチェックされている場合
+        
+        const isOnScreen = checkedStagesOnScreen.has(stageName) || uncheckedStagesOnScreen.has(stageName);
+
+        // A. 画面上で**一つでも**チェックされている場合 -> クリア済みに追加
         if (checkedStagesOnScreen.has(stageName)) {
             finalClearedStages.add(stageName);
         } 
-        // B. 画面に表示されていないが、元のURLでクリア済みだった場合（状態維持）
-        // ただし、画面に表示されている場合はAのロジックが優先される
-        else if (!uncheckedStagesOnScreen.has(stageName) && clearedStages.includes(stageName)) {
+        // B. 画面に表示されておらず、元のURLでクリア済みだった場合 -> 状態維持のため追加
+        else if (!isOnScreen && clearedStages.includes(stageName)) {
             finalClearedStages.add(stageName);
         }
-        // C. 画面に表示されており、すべてチェックが外れている場合 (Bの条件で弾かれる)
-        // D. 画面に表示されておらず、元のURLでも未クリアだった場合 (Setに追加しない)
+        // C. 画面に表示されているが、**すべてチェックが外れている**場合
+        //    -> uncheckedStagesOnScreenには含まれるが、checkedStagesOnScreenには含まれないため、Setに追加されない (未クリア解除)
     });
 
     let updatedClearedStages = Array.from(finalClearedStages);
