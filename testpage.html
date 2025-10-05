@@ -491,26 +491,50 @@ function renderClearedList(){
 }
 
 document.getElementById("update-url").addEventListener("click", ()=> {
-  const newCleared = [];
-  
-  // 開催中のイベント、開催予定のイベント、過去のイベントすべてからチェック済みのステージ名を取得
-  document.querySelectorAll(".check:checked").forEach(cb=>{
-    const name = cb.getAttribute('data-event-name');
-    if(name && !newCleared.includes(name)) newCleared.push(name);
-  });
-  
-  // 既存のクリア済みステージと今回チェックされたステージをマージ
-  let updatedClearedStages = Array.from(new Set(newCleared)); // clearedStages はここでリセット
+    const allStages = events.map(e => e.name); // 全ステージ名を取得
+    const checkedStagesOnScreen = new Set();
+    const uncheckedStagesOnScreen = new Set();
+    
+    // 画面上の全チェックボックスを走査し、チェック状態を集める
+    document.querySelectorAll(".check").forEach(cb => {
+        const name = cb.getAttribute('data-event-name');
+        if (!name) return;
 
-  const params = new URLSearchParams();
-  if(updatedClearedStages.length>0) {
+        if (cb.checked) {
+            checkedStagesOnScreen.add(name);
+        } else {
+            uncheckedStagesOnScreen.add(name);
+        }
+    });
 
-    const shortParam = namesToIndicesString(updatedClearedStages);
-    params.set("cleared", shortParam);
-  }
-  
-  // URLのクリア済みパラメータを更新し、ページをリロードして再レンダリング
-  window.location.search=params.toString();
+    let finalClearedStages = new Set();
+    
+    // 1. 全ステージ名をループし、最終的なクリア状態を決定
+    allStages.forEach(stageName => {
+        // A. 画面上のチェックボックスが一つでもチェックされている場合
+        if (checkedStagesOnScreen.has(stageName)) {
+            finalClearedStages.add(stageName);
+        } 
+        // B. 画面に表示されていないが、元のURLでクリア済みだった場合（状態維持）
+        // ただし、画面に表示されている場合はAのロジックが優先される
+        else if (!uncheckedStagesOnScreen.has(stageName) && clearedStages.includes(stageName)) {
+            finalClearedStages.add(stageName);
+        }
+        // C. 画面に表示されており、すべてチェックが外れている場合 (Bの条件で弾かれる)
+        // D. 画面に表示されておらず、元のURLでも未クリアだった場合 (Setに追加しない)
+    });
+
+    let updatedClearedStages = Array.from(finalClearedStages);
+    
+    // URLのクリア済みパラメータを作成
+    const params = new URLSearchParams();
+    if(updatedClearedStages.length>0) {
+        const shortParam = namesToIndicesString(updatedClearedStages);
+        params.set("cleared", shortParam);
+    }
+    
+    // URLのクリア済みパラメータを更新し、ページをリロードして再レンダリング
+    window.location.search=params.toString();
 });
 
 document.getElementById("copy-url").addEventListener("click", ()=> {
