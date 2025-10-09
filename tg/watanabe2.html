@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>【テスト形式】空欄補充 - Universal Design</title>
+  <style>
+    /* 全体設定 - 前回の見やすいデザインを維持 */
+    :root{
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,'Hiragino Kaku Gothic ProN',Meiryo, sans-serif;
+      background:#f0f2f5;
+      color:#1a1a1a;
+    }
+    
+    /* ダークモード対応 */
+    @media (prefers-color-scheme:dark){
+      :root{background:#1a1a1a;color:#f0f0f0;}
+      p.sentence{
+        background:#262626;
+        box-shadow:0 4px 12px rgba(0,0,0,0.3);
+        border:1px solid #333;
+        border-left:5px solid #00c0ff; /* 青を少し明るく */
+      }
+      .toggle-jp{background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.2);color:#f0f0f0;}
+      button{background:#00c0ff; color:#1a1a1a; border-color:transparent;}
+      button:hover{background:#00a0d9;}
+      .paren{border-bottom:2px dotted #00c0ff; color:#00c0ff;}
+      .jp{background:#3a3a3a; border-left:3px solid #00c0ff;}
+      .hint{color:#bbb;}
+    }
+
+    /* ラッパー */
+    .wrap{
+      max-width:800px;
+      margin:30px auto;
+      padding:20px;
+    }
+    
+    /* タイトル */
+    h1{
+      font-size:1.5rem;
+      margin-bottom:1.5rem;
+      border-bottom:3px solid #007bff;
+      padding-bottom:10px;
+      color:#007bff;
+    }
+    
+    /* 各文章のカード */
+    p.sentence{
+      background:#ffffff;
+      border-radius:12px;
+      padding:16px;
+      margin:15px 0;
+      box-shadow:0 4px 12px rgba(0,0,0,0.08);
+      border-left:5px solid #007bff; /* アクセントカラー */
+      counter-increment: sentence-num; /* 番号付けの準備 */
+    }
+    
+    /* 番号表示 */
+    p.sentence::before {
+      content: counter(sentence-num) ". ";
+      font-weight: bold;
+      color: #007bff;
+      margin-right: 5px;
+      font-size: 1.1rem;
+    }
+
+    /* 英語のテキスト */
+    .eng-line {
+        display: flex;
+        align-items: flex-start; /* 上揃えに */
+        justify-content: space-between;
+    }
+    .eng-text {
+        flex-grow: 1;
+        margin-right: 10px;
+        font-size:1.1rem;
+        line-height:1.8;
+        font-weight:500;
+    }
+    
+    /* 日本語のテキスト */
+    .jp{
+      font-size:0.95rem;
+      line-height:1.6;
+      margin-top:12px;
+      padding:10px;
+      background:#f8f9fa;
+      border-radius:8px;
+      border-left:3px solid #007bff;
+      display:none; /* 最初は非表示に設定 */
+    }
+    
+    /* 和訳表示ボタン */
+    .toggle-jp{
+      display:inline-block;
+      flex-shrink: 0;
+      margin-left:5px;
+      font-size:0.8rem;
+      background:#e9ecef;
+      border-radius:15px;
+      padding:6px 12px;
+      border:none;
+      cursor:pointer;
+      transition:background 0.2s;
+    }
+    .toggle-jp:hover{
+        background:#dee2e6;
+    }
+
+    /* 括弧（空欄）部分 */
+    .paren{
+      cursor:pointer;
+      border-bottom:2px solid #dc3545; /* 赤い実線に変更して、**空欄**であることを強調 */
+      padding:0 3px;
+      color:transparent; /* **中身の文字を透明にして見えなくする** */
+      font-weight:bold;
+      white-space: nowrap; /* 空欄が途中で改行しないように */
+    }
+
+    .paren.revealed{
+        color:#dc3545; /* **表示されたら赤い文字で答えを表示** */
+        background:rgba(220,53,69,0.1); /* 薄い背景色 */
+        border-bottom:2px solid transparent; /* 表示されたら線は消す */
+        border-radius: 4px;
+        padding:0 4px;
+    }
+    .paren .inner{display:inline;}
+    .paren .dots{display:none} /* 点々は不要なため非表示 */
+
+    /* コントロールボタン群 */
+    .controls{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:20px;
+      padding:10px 0;
+      border-bottom:1px solid #ddd;
+    }
+    button{
+      background:#007bff;
+      color:#fff;
+      border:none;
+      padding:10px 15px;
+      border-radius:20px;
+      cursor:pointer;
+      font-weight:600;
+      transition:background 0.2s, transform 0.1s;
+    }
+    button:hover{background:#0056b3;}
+    button:active{transform:translateY(1px);box-shadow:0 2px 4px rgba(0,0,0,0.2);}
+    
+    /* ヒント */
+    .hint{
+      font-size:0.9rem;
+      color:#6c757d;
+      margin-top:20px;
+      padding:10px;
+      border-top:1px solid #eee;
+    }
+
+    /* スマホ対応 */
+    @media (max-width: 600px) {
+        .wrap {margin: 15px; padding: 10px;}
+        h1 {font-size: 1.3rem;}
+        .controls {gap: 8px;}
+        button {flex-grow: 1; font-size: 0.9rem; padding: 8px 10px;}
+        .eng-text {font-size: 1rem;}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>2学期英コ小テスト【空欄補充形式】</h1>
+    <div class="controls">
+      <button id="reveal-all-paren">空欄の**答えを全て表示**</button>
+      <button id="hide-all-paren">空欄の**答えを全て隠す**</button>
+      <button id="reveal-all-jp">和訳を**全て表示**</button>
+      <button id="hide-all-jp">和訳を**全て隠す**</button>
+    </div>
+
+    <div id="list">
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">Do you know what <span class="paren">(<span class="inner">universal</span>)</span> design is?</span>
+            <button class="toggle-jp" data-target="jp1">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp1">みなさんは、ユニバーサルデザインとは何か知っていますか。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">First, let's look at these pictures of four types of light <span class="paren">(<span class="inner">switches</span>)</span> used in Japan.</span>
+            <button class="toggle-jp" data-target="jp2">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp2">まずは、日本で使われている4種類の照明スイッチの写真を見てみましょう。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">Switch A is an older type. It is small and hard to turn on and off.</span>
+            <button class="toggle-jp" data-target="jp3">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp3">スイッチAは古いタイプです。小さくて、つけたり消したりするのが難しいです。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">It is <span class="paren">(<span class="inner">especially</span>)</span> hard to use if your hands are full or if you are old and <span class="paren">(<span class="inner">frail</span>)</span>.</span>
+            <button class="toggle-jp" data-target="jp4">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp4">手がふさがっている時や、高齢で体が弱っている人にとっては特に使いづらいです。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">Switches B, C, and D are newer designs.</span>
+            <button class="toggle-jp" data-target="jp5">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp5">スイッチB、C、Dは新しいデザインです。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">Switch B is bigger and easier to press than Switch A.</span>
+            <button class="toggle-jp" data-target="jp6">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp6">スイッチBはスイッチAよりも大きく、押しやすいです。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text"><span class="paren">(<span class="inner">Carrying</span>)</span> something in both hands, you can even press it with your <span class="paren">(<span class="inner">elbow</span>)</span>.</span>
+            <button class="toggle-jp" data-target="jp7">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp7">両手に何かを持っていても、ひじで押すことさえできます。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">Switch C has a small lamp on it. You can find it easily in the dark.</span>
+            <button class="toggle-jp" data-target="jp8">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp8">スイッチCには小さなランプがついていて、暗い場所でも簡単に見つけられます。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">Switch D <span class="paren">(<span class="inner">combines</span>)</span> both of these <span class="paren">(<span class="inner">improvements</span>)</span>.</span>
+            <button class="toggle-jp" data-target="jp9">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp9">スイッチDはこれらの改良点の両方を兼ね備えています。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">Light switches have <span class="paren">(<span class="inner">improved</span>)</span> greatly over the years.</span>
+            <button class="toggle-jp" data-target="jp10">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp10">照明スイッチは長年のうちに大きく改良されてきました。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">When each new design was <span class="paren">(<span class="inner">introduced</span>)</span>, it was easier to use than the older types.</span>
+            <button class="toggle-jp" data-target="jp11">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp11">新しいデザインが導入されるたびに、以前のタイプより使いやすくなりました。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">These new <span class="paren">(<span class="inner">products</span>)</span> are <span class="paren">(<span class="inner">examples</span>)</span> of universal design.</span>
+            <button class="toggle-jp" data-target="jp12">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp12">これらの新しい製品はユニバーサルデザインの例です。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">Universal design is the design of <span class="paren">(<span class="inner">products</span>)</span>, buildings, or <span class="paren">(<span class="inner">environments</span>)</span> for everyone.</span>
+            <button class="toggle-jp" data-target="jp13">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp13">ユニバーサルデザインとは、すべての人のための製品・建物・環境のデザインのことです。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">These designs should be easy to use for people of any age, <span class="paren">(<span class="inner">ability</span>)</span> or <span class="paren">(<span class="inner">disability</span>)</span>.</span>
+            <button class="toggle-jp" data-target="jp14">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp14">これらのデザインは、年齢や能力・障がいの有無にかかわらず使いやすいものであるべきです。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">Universal design <span class="paren">(<span class="inner">requires</span>)</span> designers to think of others and <span class="paren">(<span class="inner">imagine</span>)</span> their <span class="paren">(<span class="inner">situations</span>)</span>.</span>
+            <button class="toggle-jp" data-target="jp15">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp15">ユニバーサルデザインは、デザイナーに他人のことを考え、彼らの状況を想像することを求めます。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">What is OK for you may not be OK for others.</span>
+            <button class="toggle-jp" data-target="jp16">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp16">あなたにとって大丈夫なことが、他の人にとってはそうでないかもしれません。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">In Japan, steps are being taken to design town address signs that everyone can read.</span>
+            <button class="toggle-jp" data-target="jp17">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp17">日本では、誰もが読める住所表示板を設計するための取り組みが進められています。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">What do you think about address signs written only in kanji?</span>
+            <button class="toggle-jp" data-target="jp18">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp18">漢字だけで書かれた住所表示板について、あなたはどう思いますか。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">These signs are unhelpful for kids and <span class="paren">(<span class="inner">foreigners</span>)</span> who cannot read kanji.</span>
+            <button class="toggle-jp" data-target="jp19">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp19">これらの表示は、漢字が読めない子どもや外国人には役に立ちません。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">They could <span class="paren">(<span class="inner">probably</span>)</span> read an address written in hiragana or the Roman alphabet.</span>
+            <button class="toggle-jp" data-target="jp20">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp20">ひらがなやローマ字で書かれた住所なら、たぶん読むことができるでしょう。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">I think town address signs leave something to be <span class="paren">(<span class="inner">desired</span>)</span>.</span>
+            <button class="toggle-jp" data-target="jp21">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp21">私は、住所表示板には改善の余地があると思います。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">If the signs were written in braille as well, <span class="paren">(<span class="inner">blind</span>)</span> or visually <span class="paren">(<span class="inner">impaired</span>)</span> people could read them.</span>
+            <button class="toggle-jp" data-target="jp22">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp22">もしその表示板が点字でも書かれていれば、目の見えない人や視覚障がいのある人も読むことができます。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">Pictograms are also a good example of universal design.</span>
+            <button class="toggle-jp" data-target="jp23">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp23">ピクトグラムもユニバーサルデザインのよい例です。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">They can be understood by people <span class="paren">(<span class="inner">regardless</span>)</span> of their age or <span class="paren">(<span class="inner">language</span>)</span>.</span>
+            <button class="toggle-jp" data-target="jp24">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp24">それらは年齢や言語に関係なく理解することができます。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">However, even pictograms sometimes <span class="paren">(<span class="inner">cause</span>)</span> a problem.</span>
+            <button class="toggle-jp" data-target="jp25">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp25">しかし、ピクトグラムでさえ時には問題を引き起こすことがあります。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">In Japan, Pictogram A has been used since the 17th <span class="paren">(<span class="inner">century</span>)</span> to <span class="paren">(<span class="inner">represent</span>)</span> a hot spring.</span>
+            <button class="toggle-jp" data-target="jp26">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp26">日本では、ピクトグラムAは17世紀から温泉を表すために使われています。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">However, the meaning of this symbol is not <span class="paren">(<span class="inner">obvious</span>)</span> to foreign visitors.</span>
+            <button class="toggle-jp" data-target="jp27">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp27">しかし、この記号の意味は外国人観光客には分かりにくいです。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">Some of them went into a building with this sign, where they were surprised.</span>
+            <button class="toggle-jp" data-target="jp28">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp28">この記号がある建物に入って驚いた観光客もいました。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">They found that it was not a <span class="paren">(<span class="inner">restaurant</span>)</span>.</span>
+            <button class="toggle-jp" data-target="jp29">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp29">そこがレストランではないと気づいたのです。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">To help <span class="paren">(<span class="inner">overseas</span>)</span> visitors, the Japanese government <span class="paren">(<span class="inner">introduced</span>)</span> Pictogram B.</span>
+            <button class="toggle-jp" data-target="jp30">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp30">海外からの観光客のために、日本政府はピクトグラムBを導入しました。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">This caused a hot <span class="paren">(<span class="inner">debate</span>)</span>.</span>
+            <button class="toggle-jp" data-target="jp31">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp31">これは激しい議論を引き起こしました。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">Some people thought the new symbol was better.</span>
+            <button class="toggle-jp" data-target="jp32">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp32">新しい記号のほうが良いと考える人もいました。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">Others <span class="paren">(<span class="inner">argued</span>)</span> that the old one is part of Japanese <span class="paren">(<span class="inner">culture</span>)</span> and should be kept.</span>
+            <button class="toggle-jp" data-target="jp33">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp33">一方で、古い記号は日本の文化の一部であり残すべきだと主張する人もいました。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">The government <span class="paren">(<span class="inner">finally</span>)</span> decided that people can use <span class="paren">(<span class="inner">either</span>)</span> one.</span>
+            <button class="toggle-jp" data-target="jp34">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp34">政府は最終的に、どちらの記号を使ってもよいと決定しました。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">I learned from Mr. Parker's speech that pictograms should be easy to understand.</span>
+            <button class="toggle-jp" data-target="jp35">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp35">私はパーカー氏の話から、ピクトグラムは分かりやすいものであるべきだと学びました。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">However, we saw that they can sometimes go against <span class="paren">(<span class="inner">tradition</span>)</span>.</span>
+            <button class="toggle-jp" data-target="jp36">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp36">しかし、時には伝統に反することもあるとわかりました。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">I also learned that pictograms should be simple.</span>
+            <button class="toggle-jp" data-target="jp37">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp37">また、ピクトグラムはシンプルであるべきだということも学びました。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">In this case, I think we should be <span class="paren">(<span class="inner">careful</span>)</span> of <span class="paren">(<span class="inner">stereotypes</span>)</span>.</span>
+            <button class="toggle-jp" data-target="jp38">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp38">この場合、私たちは固定観念に気をつけるべきだと思います。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">Please look at these three pictograms.</span>
+            <button class="toggle-jp" data-target="jp39">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp39">これら3つのピクトグラムを見てください。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">They are simple and easy to understand, but these symbols seem to be <span class="paren">(<span class="inner">based</span>)</span> on stereotypes of men and women.</span>
+            <button class="toggle-jp" data-target="jp40">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp40">それらは単純で分かりやすいですが、男女の固定観念に基づいているように見えます。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">In Pictogram A, why is the woman colored red and wearing a skirt?</span>
+            <button class="toggle-jp" data-target="jp41">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp41">ピクトグラムAでは、なぜ女性は赤く塗られ、スカートをはいているのでしょうか。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">In Pictogram B, why are the people having a business meeting both men?</span>
+            <button class="toggle-jp" data-target="jp42">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp42">ピクトグラムBでは、なぜ会議をしている人が両方とも男性なのでしょうか。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">In Pictogram C, why is it a woman who is taking care of the child?</span>
+            <button class="toggle-jp" data-target="jp43">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp43">ピクトグラムCでは、なぜ子どもの世話をしているのが女性なのでしょうか。</div>
+      </p>
+
+      <p class="sentence">
+        <div class="eng-line">
+            <span class="eng-text">The idea of universal design is fine, but I find it difficult to <span class="paren">(<span class="inner">avoid</span>)</span> stereotypes in pictograms.</span>
+            <button class="toggle-jp" data-target="jp44">和訳を表示</button>
+        </div>
+        <div class="jp" id="jp44">ユニバーサルデザインという考えはすばらしいですが、ピクトグラムで固定観念を避けるのは難しいと感じます。</div>
+      </p>
+
+    </div>
+
+    <p class="hint">💡 **使い方**：英文の空欄の**赤い下線部分**をタップ（またはクリック）すると**答えの単語**が表示されます。右側の**和訳ボタン**で和訳を表示／非表示できます。</p>
+  </div>
+
+  <script>
+    // toggle single paren by clicking the whole .paren
+    document.addEventListener('click', function(e){
+      const p = e.target.closest('.paren');
+      if(p){
+        p.classList.toggle('revealed');
+      }
+      // toggle Japanese translation
+      if(e.target.classList && e.target.classList.contains('toggle-jp')){
+        const id = e.target.getAttribute('data-target');
+        const el = document.getElementById(id);
+        const button = e.target;
+        if(!el) return;
+
+        // 日本語訳の表示/非表示を切り替える
+        if(el.style.display === 'block'){
+          el.style.display = 'none';
+          button.textContent = '和訳を表示';
+        }else{
+          el.style.display = 'block';
+          button.textContent = '和訳を隠す';
+        }
+      }
+    });
+
+    // global controls
+    document.getElementById('reveal-all-paren').addEventListener('click', function(){
+      document.querySelectorAll('.paren').forEach(p=>p.classList.add('revealed'));
+    });
+    document.getElementById('hide-all-paren').addEventListener('click', function(){
+      document.querySelectorAll('.paren').forEach(p=>p.classList.remove('revealed'));
+    });
+    document.getElementById('reveal-all-jp').addEventListener('click', function(){
+      document.querySelectorAll('.jp').forEach(j=>{j.style.display='block'});
+      document.querySelectorAll('.toggle-jp').forEach(b=>b.textContent='和訳を隠す');
+    });
+    document.getElementById('hide-all-jp').addEventListener('click', function(){
+      document.querySelectorAll('.jp').forEach(j=>{j.style.display='none'});
+      document.querySelectorAll('.toggle-jp').forEach(b=>b.textContent='和訳を表示');
+    });
+  </script>
+</body>
+</html>
