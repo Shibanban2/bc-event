@@ -7,7 +7,7 @@ import aiohttp
 import asyncio
 import matplotlib.font_manager as fm
 
-# ================== フォント設定 =================
+# ================== フォント設定だ　=================
 def set_japanese_font():
     plt.rcParams["font.family"] = "IPAPGothic"
     print("✅ 使用フォント: IPAPGothic")
