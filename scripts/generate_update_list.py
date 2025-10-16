@@ -32,7 +32,7 @@ def main():
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ver.14.7 Update</title>
+  <title>Ver.15.0 Update</title>
   <link rel="icon" href="favicon.ico" type="image/x-icon" />
 
   <!-- Google tag (gtag.js) -->
@@ -120,7 +120,7 @@ def main():
   </style>
 </head>
 <body>
-  <h1>Ver.14.7 Update</h1>
+  <h1>Ver.15.0 Update</h1>
   <ul>
     {''.join(entries)}
   </ul>
