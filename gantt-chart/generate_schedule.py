@@ -51,7 +51,7 @@ def get_day_of_week_jp(date_str):
     return days[date.weekday()]
 
 # ================== ガチャ行パース ==================
-def parse_gatya_row(row, name_map, today_str):
+def parse_gatya_row(row, name_map, yesterday_str): # today_strをyesterday_strに変更
     try:
         start_date = str(row[0])
         end_date = str(row[2])
@@ -64,8 +64,11 @@ def parse_gatya_row(row, name_map, today_str):
             return []
         id = int(row[col_id]) if row[col_id].isdigit() else -1
         confirm = "【確定】" if len(row) > confirm_col and row[confirm_col] == "1" else ""
-        if id <= 90 or end_date == "20300101" or end_date < today_str: # 修正: 終了日が今日より前のイベントを除外
+        
+        # 修正: 終了日が昨日より前のイベントは除外（つまり、昨日を含むそれ以降に終了するイベントを表示）
+        if id <= 90 or end_date == "20300101" or end_date < yesterday_str:
             return []
+            
         name = name_map.get(str(id), f'error[{id}]')
         if name in ["プラチナガチャ", "レジェンドガチャ"]:
             return []
@@ -95,10 +98,13 @@ async def main():
     name_rows = await fetch_tsv("https://shibanban2.github.io/bc-event/name.tsv")
     name_map = {r[0]: r[1] for r in name_rows if len(r) >= 2}
 
-    today_str = datetime.now().strftime("%Y%m%d")
+    # 修正: フィルタリング基準を「昨日」にする
+    yesterday = datetime.now().date() - timedelta(days=1)
+    yesterday_str = yesterday.strftime("%Y%m%d")
+    
     events = []
     for row in gatya_rows[1:]:
-        events.extend(parse_gatya_row(row, name_map, today_str))
+        events.extend(parse_gatya_row(row, name_map, yesterday_str))
 
     if not events:
         print("No events found")
@@ -142,7 +148,7 @@ async def main():
     # ---- 日付ラベル ----
     rotation_angle = 45 if num_days >= 14 else 0
     
-    # 修正: 日付ラベルをマスの真ん中に配置
+    # 日付ラベルをマスの真ん中に配置
     tick_positions_centered = [pos + 0.5 for pos in tick_positions]
     ax.set_xticks(tick_positions_centered) 
     
@@ -161,7 +167,13 @@ async def main():
         start_offset = timedelta(days=stime / 2400) if stime != 0 else timedelta(0)
         end_offset = timedelta(days=etime / 2400) if etime != 0 else timedelta(0)
         left = start + start_offset
-        duration = (end + end_offset - start - start_offset).total_seconds() / 86400
+        duration = (end + end_offset - start + timedelta(seconds=1)).total_seconds() / 86400 # 終了時刻を含めるための微調整を削除し、純粋な期間計算に変更（timedelta(seconds=1)は削除）
+        duration = (end + end_offset - start + timedelta(days=1) - start_offset).total_seconds() / 86400 # 日付だけのイベントが1日分になるよう+1日補正し、開始オフセットを引く
+        
+        # 期間が0以下になる場合は、期間を1日として処理するか、ここではイベントを表示しない
+        if duration <= 0:
+            duration = 1.0 # 期間が計算上ゼロやマイナスになる場合の最小補正
+
         draw_rounded_bar(ax, i + 1, left, duration, pastel_colors[i % len(pastel_colors)])
         ylabels.append(label)
         
@@ -174,7 +186,7 @@ async def main():
     ax.grid(True, which='both', linestyle='--', alpha=0.5)
     # ---- 今日の位置に赤い点線 ----
     ax.set_xlim(date2num(min_date), date2num(max_date))
-    # 修正: 現在時刻ではなく、今日の真夜中の位置に線を引き、ずれを修正
+    # 現在時刻ではなく、今日の真夜中の位置に線を引き、ずれを修正
     today_num = date2num(datetime.now().date()) 
     ax.axvline(
         today_num,                    # 今日の日付の始まりをX座標に
