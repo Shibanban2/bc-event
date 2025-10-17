@@ -64,7 +64,7 @@ def parse_gatya_row(row, name_map, today_str):
             return []
         id = int(row[col_id]) if row[col_id].isdigit() else -1
         confirm = "【確定】" if len(row) > confirm_col and row[confirm_col] == "1" else ""
-        if id <= 90 or end_date == "20300101" or start_date < today_str:
+        if id <= 90 or end_date == "20300101" or end_date < today_str: # 修正: 終了日が今日より前のイベントを除外
             return []
         name = name_map.get(str(id), f'error[{id}]')
         if name in ["プラチナガチャ", "レジェンドガチャ"]:
@@ -141,7 +141,11 @@ async def main():
 
     # ---- 日付ラベル ----
     rotation_angle = 45 if num_days >= 14 else 0
-    ax.set_xticks(tick_positions)
+    
+    # 修正: 日付ラベルをマスの真ん中に配置
+    tick_positions_centered = [pos + 0.5 for pos in tick_positions]
+    ax.set_xticks(tick_positions_centered) 
+    
     ax.set_xticklabels(
         [f"{d.day}({get_day_of_week_jp(d.strftime('%Y%m%d'))})" for d in all_dates],
         rotation=rotation_angle, ha="center", fontsize=9
@@ -170,9 +174,10 @@ async def main():
     ax.grid(True, which='both', linestyle='--', alpha=0.5)
     # ---- 今日の位置に赤い点線 ----
     ax.set_xlim(date2num(min_date), date2num(max_date))
-    now = datetime.now()
+    # 修正: 現在時刻ではなく、今日の真夜中の位置に線を引き、ずれを修正
+    today_num = date2num(datetime.now().date()) 
     ax.axvline(
-        date2num(now),                # 現在時刻を数値に変換してX座標に
+        today_num,                    # 今日の日付の始まりをX座標に
         color="red",                  # 赤色
         linestyle="--",               # 点線
         linewidth=1.2,                # 線の太さ
@@ -192,5 +197,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-
-
