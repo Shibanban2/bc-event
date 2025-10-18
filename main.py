@@ -5,7 +5,7 @@ from datetime import datetime
 from io import StringIO
 
 # TSV URL
-URL = "https://shibanban2.github.io/bc-event/token/gatya.tsv"
+URL = "https://bc-event.vercel.app/token/gatya.tsv"
 
 # TSVを取得
 response = requests.get(URL)
