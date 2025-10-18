@@ -1,7 +1,7 @@
 let data = {};
 const now = new Date();
 
-fetch('https://Shibanban2.github.io/bc-event/data.json')
+fetch('https://bc-event.vercel.app/data.json')
   .then(res => res.json())
   .then(json => {
     data = json;
