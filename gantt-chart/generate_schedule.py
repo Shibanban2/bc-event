@@ -91,8 +91,8 @@ async def main():
     set_japanese_font()
 
     # ---- TSV読み込み ----
-    gatya_rows = await fetch_tsv("https://shibanban2.github.io/bc-event/token/gatya.tsv")
-    name_rows = await fetch_tsv("https://shibanban2.github.io/bc-event/name.tsv")
+    gatya_rows = await fetch_tsv("https://bc-event.vercel.app/token/gatya.tsv")
+    name_rows = await fetch_tsv("https://bc-event.vercel.app/name.tsv")
     name_map = {r[0]: r[1] for r in name_rows if len(r) >= 2}
 
     today_str = datetime.now().strftime("%Y%m%d")
