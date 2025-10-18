@@ -24,7 +24,7 @@ def main():
         title = fetch_stage_title(sid)  # 個別にタイトル取得
         # フォルダは英字部分すべてを使用（ND/SR対応）
         category = ''.join([c for c in sid if c.isalpha()])
-        pdf_url = f"https://shibanban2.github.io/bc-event/stage2/{category}/{sid}.pdf"
+        pdf_url = f"https://bc-event.vercel.app/stage2/{category}/{sid}.pdf"
         entries.append(f"<li>{sid} {title} <a href='{pdf_url}'>PDF</a></li>")
 
     html = f"""<!DOCTYPE html>
